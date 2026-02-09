@@ -12,10 +12,10 @@ academic outcomes. Academic performance is represented
 through three grade attributes rather than a single target label,
 making the dataset suitable for exploratory pattern discovery
 
-## Dataset source link
-UCI Machine Learning Repository: 
+## Dataset source link:
+UCI Machine Learning Repository:\
 https://archive-beta.ics.uci.edu/dataset/320/student+performance
 
-## Author
-Cesar Arevalo Colocho
+## Author Info:
+Cesar Arevalo Colocho \
 careval3@students.kennesaw.edu
