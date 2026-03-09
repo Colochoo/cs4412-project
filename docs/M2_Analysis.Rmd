@@ -1,0 +1,581 @@
+---
+title: "CS 4412 Data Mining - M2 Initial Implementation"
+author: "Cesar Arevalo Colocho"
+date: "03/05/2026"
+output: 
+  pdf_document:
+    fig_caption: true
+  html_document:
+    fig_caption: true
+geometry: margin=1in
+fontsize: 11pt
+header-includes:
+  - \usepackage{fvextra}
+  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere=true,commandchars=\\\{\}}
+---
+
+# Introduction
+This analysis explores patterns within the Student Performance dataset obtained from the UCI Machine Learning Repository. The dataset contains demographic, academic, social, and lifestyle attributes for secondary school students enrolled in Mathematics and Portuguese language courses.
+
+The goal of this milestone is to perform exploratory data analysis (EDA), prepare the dataset through preprocessing and transformation, and apply an initial data mining technique to discover patterns in student behavior and academic performance.
+
+The discovery questions guiding this analysis are:
+
+1. Do family and socioeconomic attributes form recognizable patterns linked to academic consistency?
+
+2. How do study habits and absences interact to shape academic performance patterns?
+
+3. What natural clusters of students emerge when combining demographic, family, and academic features?
+
+To begin answering these questions, the analysis will first explore the structure and quality of the dataset then prepares a set of meaningful variables before applying clustering techniques to identify natural student groups.
+
+```{r setup, include=FALSE}
+# Setup Environment
+library(tidyverse)
+library(cluster)
+library(factoextra)
+library(corrplot)
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.aling = "center",
+  fig.width = 7,
+  fig.height = 4,
+  out.width = "90%"
+)
+```
+
+# Data Loading
+```{r loading-data, echo=TRUE}
+# Load both datasets from GitHub repository 
+student_math <- read.csv(
+"https://raw.githubusercontent.com/Colochoo/cs4412-project/main/data/student-mat.csv",
+header = TRUE,
+sep = ",",
+stringsAsFactors = FALSE
+)
+
+student_por <- read.csv(
+"https://raw.githubusercontent.com/Colochoo/cs4412-project/main/data/student-por.csv",
+header = TRUE,
+sep = ",",
+stringsAsFactors = FALSE
+)
+
+# Add course identifier
+student_math$course <- "Math"
+student_por$course <- "Portuguese"
+
+# Merge both datasets
+student_data <- rbind(student_math, student_por)
+
+# Check structure
+str(student_data)
+
+# Check Dimensions
+dim(student_data)
+```
+
+One dataset was generated from the merge of the two datasets (students from Math Course plus the students from Portuguese Language Course), which outcome result in a total of 1044 observations (students) and 34 attributes. Also in this dataset we can see a variety of type of answers such as character nominal inputs in integer numbers format, character nominal inputs in binary format, and direct integer inputs.
+
+# Data Overview
+```{r data-overview, echo=TRUE}
+# Convert attributes to numeric
+##Convert all yes and no answers to binary
+student_data <- student_data %>%
+  mutate(across(
+    where(~ all(.x %in% c("yes", "no"))),
+    ~ ifelse(.x == "yes", 1, 0)
+  ))
+
+##Convert nominal answers in binary format to binary
+student_data <- student_data %>%
+  mutate(
+    sex = ifelse(sex == "M", 1, 0),
+    address = ifelse(address == "R", 1, 0),
+    famsize = ifelse(famsize == "GT3", 1, 0),
+    Pstatus = ifelse(Pstatus == "T", 1, 0)
+  )
+
+##Convert nominal answers to numeric
+student_data <- student_data %>%
+  mutate(
+    school = as.numeric(factor(school)),
+    Mjob = as.numeric(factor(Mjob)),
+    Fjob = as.numeric(factor(Fjob)),
+    reason = as.numeric(factor(reason)),
+    guardian = as.numeric(factor(guardian)),
+    course = as.numeric(factor(course))
+  )
+
+# Check structure in numeric form
+str(student_data)
+
+# Column names (Attributes)
+names(student_data)
+```
+
+The combined dataset contains both Mathematics and Portuguese students and includes demographic, family, and academic variables that can be used for exploratory analysis and clustering. Several nominal variables were converted into numeric form for general preprocessing and visualization. However, nominal variables were not used directly in K-means clustering unless they represented meaningful ordinal or quantitative information, since arbitrary numeric codes can create misleading distances between categories.
+
+# Exploratory Data Analysis (EDA) Visualizations
+## Summary Statistics
+```{r summary, echo=FALSE}
+summary(student_data)
+```
+
+### Missing Values Check
+```{r, echo=FALSE}
+colSums(is.na(student_data))
+```
+
+### Duplicates Check
+```{r, echo=FALSE}
+sum(duplicated(student_data))
+```
+
+The dataset does not contain missing values or any duplicate value which simplifies preprocessing and makes the dataset suitable for clustering.
+
+## Age Distribution
+```{r age-distribution, echo=FALSE}
+histGraph <- hist(
+  student_data$age,
+  main="Distribution of Student Age",
+  xlab="Age",
+  ylab = "Number of Students",
+  ylim=c(0, max(table(student_data$age))*1.1),
+  col="skyblue"
+)
+
+labelsHist <- ifelse(histGraph$counts == 0, "", histGraph$counts)
+
+text(histGraph$mids, histGraph$counts, labels=labelsHist, col="gray40", pos = 3, font=2)
+```
+
+The histogram shows that most students are between ages 15 and 18. Very few students are older than 20, indicating the dataset primarily represents typical secondary school ages.
+
+## Gender Distribution
+```{r gender-distribution, echo=FALSE}
+counts <- table(student_data$sex)
+percent <- counts / sum(counts) * 100
+
+barGraph <- barplot(
+  counts,
+  names.arg=c("Female","Male"),
+  main="Gender Distribution",
+  col=c("pink","dodgerblue"),
+  ylim=c(0, max(counts)*1.1)
+)
+
+text(barGraph, counts, labels=counts, col="gray40", pos=3, font=2)
+text(barGraph, counts * 0.5, labels=paste0(round(percent,1), "%"), col=c("black","white"), cex=1.2, font=2)
+
+```
+
+The dataset contains both male and female students, with females slightly more represented than males.
+
+## Student Home Address Distribution
+```{r address-distribution, echo=FALSE}
+counts <- table(student_data$address)
+percent <- counts / sum(counts) * 100
+
+barGraph <- barplot(
+  counts,
+  names.arg=c("Urban","Rural"),
+  main="Location Address Distribution",
+  col=c("mediumblue","salmon4"),
+  ylim=c(0, max(counts)*1.1)
+)
+
+text(barGraph, counts, labels=counts, col="gray40", pos=3, font=2)
+text(barGraph, counts * 0.5, labels=paste0(round(percent,1), "%"), col=c("white","white"), cex=1.2, font=2)
+```
+
+Most students in the dataset live in urban areas, while a smaller portion reside in rural areas. This indicates that the sample is predominantly composed of urban students.
+
+## Family Socioeconomic Distribution
+```{r family-socioeconomic, echo=FALSE}
+binary_data <- student_data[, c("famsize","Pstatus","famsup","paid")]
+counts <- colSums(binary_data)
+percentages <- colMeans(binary_data) * 100
+
+barGraph <- barplot(
+  percentages,
+  main="Family Socioeconomic Characteristics Distribution\n(Total of 1044 students)",
+  ylab="Percentage out of Total Students (%)",
+  col="skyblue",
+  ylim=c(0, 100),
+  names.arg = c("Big Family","Living Together","Family Support","Paying Extra\nClasses")
+)
+
+text(barGraph, percentages, labels=paste0(round(percentages,1),"%"), col="gray40", pos=3, cex=1.2, font=2)
+text(barGraph, percentages * 0.5, labels=paste0("# Students\n", counts), col="white", font=2)
+```
+
+The family socioeconomic characteristics indicate that most students live with both parents. A majority also belong to larger families and report receiving family support. In contrast, only a small proportion of students attend paid extra classes. These findings suggest that while family support is relatively common, access to additional paid educational resources is limited for many students.
+
+## Family Relationship Distribution
+```{r family-relationship, echo=FALSE}
+counts <- table(student_data$famrel)
+percent <- counts / sum(counts) * 100
+
+barGraph <- barplot(
+  counts,
+  names=c("Very Low", "Low", "Neutral", "Good", "Excellent"),
+  main="Family Relationship Distribution\n(Total of 1044 students)",
+  xlab="Quality Level of Family Relationship",
+  ylab="Number of Students",
+  col="skyblue",
+  ylim=c(0, max(counts) * 1.2)
+)
+
+text(barGraph, counts, labels=counts, pos=3, col="gray30", cex=1.2 , font=2)
+text(barGraph, counts * 0.5, labels=paste0(round(percent,1), "%"), col="white", font=2)
+text(1.8, max(counts) * 0.88,
+     "Percentages are calculated\nfrom the total number of students", col="gray40", cex=0.9, font=3)
+```
+
+The distribution of family relationship quality shows that most students report positive family environments. More than half of the students rated their family relationship as 4 or 5, indicating strong family relationships for the majority of students. In contrast, very few students reported low relationship quality, with only less than 7.4% selecting levels 1 and 2. Overall, the data suggest that many students perceive their family relationships as supportive.
+
+## Grade Distribution Across Evaluation Periods
+```{r grade-distribution, echo=FALSE}
+boxplot(
+  student_data$G1,
+  student_data$G2,
+  student_data$G3,
+  names = c("First Period (G1)", "Second Period (G2)", "Final Grade (G3)"),
+  main="Grade Distribution by Academic Period",
+  xlab="Evaluation Period",
+  ylab="Grade Score",
+  col= c("snow4", "snow4", "snow4")
+)
+```
+
+The boxplot shows that the median grade remains approximately constant across the three evaluation periods, indicating relatively stable academic performance over time. The spread of grades is also similar for G1, G2, and G3, with slightly greater variation in the final grade. Because G1 and G2 are sequential evaluation periods, the similarity to G3 suggests that early academic performance is a strong indicator of final outcomes.
+
+## Study Time vs Final Grade
+```{r studytime-vs-grade, echo=FALSE}
+ggplot(student_data, aes(x = factor(studytime), y = G3)) +
+  scale_x_discrete(labels = c("Less than 2 Hours", "2 to 5 Hours", "5 to 10 Hours", "More than 10 Hours")) +
+  geom_boxplot(fill="limegreen") +
+  labs(
+    title="",
+    x="Study Time (Hours)",
+    y="Final Grade (G3)",
+  )
+```
+
+Students who spend more time studying tend to achieve higher final grades, though the relationship is not perfectly linear.
+The distribution indicates a modest upward trend between study time and final grade. Students in higher study-time categories tend to achieve somewhat better final grades, although there is still considerable overlap across groups. This suggests that study time contributes to performance, but it is not the only important factor.
+
+## Absences vs Final Grade
+```{r absences-vs-grade, echo=FALSE}
+ggplot(student_data, aes(x = absences, y = G3)) +
+  geom_point(alpha = 0.45) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    title="",
+    x="Number of Absences",
+    y="Final Grade (G3)"
+  )
+```
+
+The scatterplot suggests a weak negative relationship between absences and final grade. Although some students with many absences still perform well, the overall trend indicates that more absences are generally associated with slightly lower academic performance.
+
+## Past Class Failures vs Final Grade
+```{r failures-vs-grade, echo=FALSE}
+ggplot(student_data, aes(x = factor(failures), y = G3)) +
+  geom_boxplot(fill = "firebrick2") +
+  labs(
+    title="",
+    x="Number of Past Class Failures",
+    y="Final Grade (G3)"
+  )
+```
+
+The number of past failures shows a clearer negative pattern than absences. Students with no prior failures tend to perform better, while students with more previous failures generally show lower final grades. This suggests that prior academic difficulty remains an important warning sign for later performance.
+
+## Course Comparison
+```{r course-comparison, echo=FALSE}
+ggplot(student_data, aes(x = factor(course), y = G3)) +
+   scale_x_discrete(labels = c("Mathematics", "Portuguese Language")) +
+  geom_boxplot(fill = "skyblue") +
+  labs(
+    title="Final Grade by Course",
+    x="Course",
+    y="Final Grade (G3)"
+  )
+```
+
+Comparing Mathematics and Portuguese helps confirm whether the merged dataset behaves similarly across subjects. If the two distributions differ, course membership may matter when interpreting future clusters.
+
+
+## Correlation Analysis
+#### Correlation Raw Data
+```{r correlation-analysis, fig.width=5.5, fig.height=6, echo=FALSE}
+numeric_data <- student_data[, c(
+  "age","studytime","failures","absences", "paid",
+  "famsup", "famrel","G1","G2","G3")]
+
+#Correlation Raw Data
+cor(numeric_data)
+```
+
+Based on the correlation matrix, past academic results are strongly related to later grades. In particular, G1 is strongly correlated with G2 (0.85) and G3 (0.80), while G2 is very strongly correlated with G3 (0.91). This suggests that students who perform well in earlier periods tend to continue performing well in later evaluations.
+
+Failure history has a moderate negative relationship with grades (approximately -0.37), indicating that students with more prior failures tend to earn lower grades. Study time shows only a weak positive relationship with grades, which means students who study more tend to perform slightly better on average, but the effect is not strong. Absences show only a weak negative relationship with performance in this dataset.
+
+#### Correlation Visual Matrix Data
+
+```{r correlation-matrix, echo=FALSE, fig.width=7.5, fig.height=7, fig.align='center'}
+numeric_data <- student_data[, c(
+  "age","studytime","failures","absences", "paid",
+  "famsup", "famrel","G1","G2","G3")]
+
+#Visual Matrix
+corr_matrix <- cor(numeric_data)
+
+corrplot(
+  corr_matrix, 
+  method="color", 
+  type="upper", 
+  tl.col="navyblue",
+  tl.cex=0.9,
+  tl.srt = 45,
+  addCoef.col="black", 
+  number.cex=0.65,
+  col=colorRampPalette(c("red1","linen","skyblue"))(200),
+  addgrid.col="gray70",
+  mar = c(1, 1, 2, 2),
+  cl.pos = "n"
+)
+```
+
+The correlation analysis shows that prior academic performance is the strongest predictor of final grade. In particular, G1 and G2 are strongly positively correlated with G3, indicating that students who perform well early tend to maintain that performance later. Failures show a moderate negative relationship with grades, suggesting that students with a history of previous failures are more likely to earn lower final scores. Study time has only a weak positive relationship with grades, while absences show a weak negative relationship.
+
+# Socioeconomic Factors and Academic Performance
+
+## Mother's Education vs Final Grade
+```{r medu-vs-grade, echo=FALSE}
+ggplot(student_data, aes(x = factor(Medu), y = G3)) +
+  scale_x_discrete(labels = c(
+    "0"= "None", 
+    "1"= "Primary Education\n(until 4th grade)",
+    "2"= "Middle Education\n(5th to 9th)",
+    "3"= "Secondary Education\n(10th to 12th)",
+    "4"= "Higher Education")
+  ) +
+  geom_boxplot(fill="pink") +
+  labs(
+    title="",
+    x="Mother Education Level",
+    y="Final Grade (G3)"
+  )
+```
+
+Students whose mothers have higher education levels tend to achieve slightly higher academic performance. This suggests that parental education may influence the level of academic support and learning environment available at home.
+
+## Father's Education vs Final Grade
+```{r fedu-vs-grade, echo=FALSE}
+ggplot(student_data, aes(x = factor(Fedu), y = G3)) +
+  scale_x_discrete(labels = c(
+    "0"= "None", 
+    "1"= "Primary Education\n(until 4th grade)",
+    "2"= "Middle Education\n(5th to 9th)",
+    "3"= "Secondary Education\n(10th to 12th)",
+    "4"= "Higher Education")
+  ) +
+  geom_boxplot(fill="dodgerblue") +
+  labs(
+    title="",
+    x="Father Education Level",
+    y="Final Grade (G3)"
+  )
+```
+
+A similar pattern is observed with father's education level. Students with more educated parents tend to demonstrate somewhat greater academic consistency.
+
+## Paid Extra Classes vs Final Grade
+```{r paid-vs-grade, echo=FALSE}
+ggplot(student_data, aes(x = factor(paid), y = G3)) +
+  scale_x_discrete(labels = c("0" = "No", "1" = "Yes")) +
+  geom_boxplot(fill="gold") +
+  labs(
+    title="",
+    x="Paid Extra Clases",
+    y="Final Grade (G3)"
+  )
+```
+
+The boxplot suggests that students who attend paid extra classes do not show a dramatically higher final grade distribution than those who do not. While there may be a slight difference in median performance, the overlap between the two groups is substantial. This indicates that paying for extra classes alone does not strongly distinguish academic outcomes in this dataset.
+
+## Internet Access vs Academic Performance
+```{r internet-vs-grade, echo=FALSE}
+ggplot(student_data, aes(x = factor(internet), y = G3)) +
+  geom_boxplot(fill="orange") +
+  
+  labs(
+    title="",
+    x="Internet Access",
+    y="Final Grade (G3)"
+  )
+```
+
+Students with internet access appear to have slightly higher median final grades than those without internet access. However, the distribution still overlap considerably, suggesting that internet access may provide an academic advantage but is not, by itself, a dominant predictor of performance.
+
+# Data Quality and Preprocessing Checks
+
+## Check selected variables for outliers oe spread
+```{r data-quality-absences, echo=FALSE}
+# Check selected variables for outliers / spread
+boxplot(student_data$absences, 
+  main="Absence Distribution",
+  ylab ="Absences"
+)
+```
+```{r data-quality-studytime, echo=FALSE}
+boxplot(student_data$studytime, 
+  main="Study Time Distribution", 
+  ylab ="Study Time"
+)
+```
+```{r data-quality-freetime, echo=FALSE}
+boxplot(student_data$freetime, 
+  main="Free Time Distribution", 
+  ylab="Free Time"
+)
+```
+
+The dataset contains no duplicate rows. Some variables such as absences show a wider spread and possible outliers, while ordinal variables like studytime and freetime naturally take a limited set of values.
+
+# Clustering Preparation
+
+The clustering analysis focuses on academic behavior and performance-related attributes. These variables were selected because they capture study habits, historical academic performance, and student engagement patterns. Although several nominal variables were numerically encoded earlier for preprocessing, the K-means model uses only scaled ordinal and quantitative variables: studytime, failures, absences, G1, G2, G3, Medu, and Fedu. This helps avoid misleading numeric distances created by arbitrary coding of nominal categories.
+
+```{r clustering-prep, out.width='80%', echo=FALSE}
+cluster_data <- student_data[, c("studytime", "failures", "absences", "G1", "G2", "G3", "Medu", "Fedu")]
+cluster_data_scaled <- scale(cluster_data)
+summary(cluster_data_scaled)
+```
+
+## Elbow Method
+
+```{r elbow-method, echo=FALSE}
+set.seed(123)
+fviz_nbclust(cluster_data_scaled, kmeans, method = "wss") +
+  labs(title = "Elbow Method for Choosing Number of Clusters")
+```
+
+The elbow method helps identify a reasonable number of clusters by showing how the within cluster sum of squares decreases as the number of clusters increases. The point where the curve begins to flatten suggests a practical value for "k". Based on the elbow plot, k = 3 was selected because the reduction in within-cluster variation begins to level off after three clusters.
+
+## Initial K-means Clustering
+
+```{r initial-kmeans, fig.width=7.2, fig.height=5.2, echo=FALSE}
+set.seed(123)
+km_res <- kmeans(cluster_data_scaled, centers = 3, nstart = 25)
+student_data$cluster <- factor(km_res$cluster)
+
+fviz_cluster(
+  km_res, 
+  data=cluster_data_scaled,
+  geom="point",
+  pointsize = 1.5,
+  ) +
+  labs(title="Initial K-means Student Clusters")
+```
+
+This initial clustering provides a first look at whether students form natural groups according to study behavior, prior performance, absences, and parental education. The three-cluster solution is intended to identify whether distinct student profiles emerge, such as higher-performing students, moderate-performing students, and students who may be more academically at risk.
+
+## Cluster Profile Summary
+
+```{r cluster-profile, echo=FALSE}
+cluster_summary <- student_data %>%
+  group_by(cluster) %>%
+  summarise(
+    n = n(),
+    pct = round(n() / nrow(student_data) * 100, 1),
+    avg_studytime = mean(studytime),
+    avg_failures = mean(failures),
+    avg_absences = mean(absences),
+    avg_G1 = mean(G1),
+    avg_G2 = mean(G2),
+    avg_G3 = mean(G3),
+    avg_Medu = mean(Medu),
+    avg_Fedu = mean(Fedu)
+  )
+
+```
+
+The cluster summary helps profile each group more clearly. Cluster 1 can be interpreted as a higher-performing group, with stronger earlier grades and very low failure history. Cluster 2 appears to represent moderate-performing students with average grades and relatively low failure levels. Cluster 3 appears to capture a more academically at-risk group, with the lowest average grades, the highest average failure history, and the highest average absences.
+
+## Cluster Feature Comparison
+
+```{r cluster-feature-comparison, echo=FALSE, fig.width=8, fig.height=5}
+cluster_summary_long <- cluster_summary %>%
+  pivot_longer(
+    cols = starts_with("avg_"),
+    names_to = "variable",
+    values_to = "value"
+  )
+
+ggplot(cluster_summary_long, aes(x = variable, y = value, fill = factor(cluster))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    title = "Cluster Feature Comparison",
+    x = "Feature",
+    y = "Average Value",
+    fill = "Cluster"
+  ) +
+  theme_minimal()
+```
+
+The cluster feature comparison visualization highlights the differences between the identified student groups across the selected variables. The chart shows how average study time, failures, absences, and grades vary between clusters. This reinforces the interpretation that one cluster represents higher-performing students with fewer failures, another reflects moderate academic performance, and a third cluster captures students at greater academic risk.
+
+## Silhouette Score Evaluation
+
+```{r silhouette-score, echo=FALSE}
+sil <- silhouette(km_res$cluster, dist(cluster_data_scaled))
+avg_silhouette <- mean(sil[, 3])
+avg_silhouette
+```
+
+To evaluate the quality of the clustering solution, a silhouette analysis was performed. The silhouette score measures how similar each observation is to its own cluster compared to other clusters. Values range from -1 to 1, where higher values indicate better separation between clusters. The average silhouette score for this clustering solution provides an additional indication of how well the student groups are separated in the feature space.
+
+```{r silhouette-plot, echo=FALSE, fig.width=8, fig.height=5}
+plot(sil, main = "Silhouette Plot for Student Clusters")
+```
+
+Because G1, G2, and G3 are highly correlated variables, they strongly influence the clustering outcome. Future work could explore dimensionality reduction methods such as Principal Component Analysis (PCA) to reduce redundancy and better capture underlying student patterns.
+
+# Pattern Discovery Results
+
+## Discovery Question 1: Family and Socioeconomic Patterns
+
+The analysis suggests that family and socioeconomic characteristics do show recognizable patterns, although their relationship with academic performance is generally modest compared with direct academic indicators. Family relationship quality is generally positive across the sample, and parental education appears to have a slight positive association with final grades. In contrast, paid extra classes do not strongly distinguish higher-performing students from lower-performing students, while internet access may provide a small advantage but is not a dominant predictor on its own.
+
+## Discovery Question 2: Study Habits, Absences, and Performance
+
+Study habits and absences show some relationship with academic performance, but the patterns are not equally strong. Study time has a weak positive relationship with final grade, meaning that students who study more tend to perform slightly better on average. Absences show a weak negative relationship with performance, while previous failures show a much more noticeable negative pattern. This suggests that long-term academic history is a stronger signal of student risk than attendance alone.
+
+## Discovery Question 3: Natural Student Clusters
+
+The K-means clustering results suggest that three natural student groups emerge when combining academic, behavioral, and family-education variables. One cluster represents higher-performing students with stronger grade histories and fewer failures, another captures moderate-performing students, and a third reflects a more academically at-risk group with lower grades, more failures, and higher absences. These results suggest that student performance patterns are driven more strongly by academic history than by isolated socioeconomic variables.
+
+# Key Findings
+
+1. The dataset is complete and suitable for exploratory analysis and clustering.
+
+2. Prior grades, especially G1 and G2, are the strongest predictors of final performance.
+
+3. Past failures show a more noticeable negative relationship with final grade than absences.
+
+4. Study time has a positive but relatively weak relationship with final grade.
+
+5. Family relationships are generally positive across the sample, and parental education appears to have a modest association with performance.
+
+6. The K-means solution suggests three student profiles: higher-performing, moderate-performing, and academically at-risk.
+
+# Conclusion
+
+This report provides an initial exploratory and preprocessing foundation for the Student Performance project. The visualizations and correlation analysis suggest that previous academic outcomes and failure history are more strongly associated with final grades than isolated socioeconomic variables. The initial clustering setup also offers a starting point for identifying natural student profiles. In future milestones, the clustering results can be evaluated more formally and expanded with additional interpretation, validation metrics, and predictive modeling.
