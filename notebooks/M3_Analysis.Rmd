@@ -1,0 +1,897 @@
+---
+title: "CS 4412 Data Mining - M3 Complete Implementation"
+author: "Cesar Arevalo Colocho"
+date: "04/05/2026"
+output: 
+  pdf_document:
+    fig_caption: true
+  html_document:
+    fig_caption: true
+geometry: margin=1in
+fontsize: 11pt
+header-includes:
+  - \usepackage{fvextra}
+  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere=true,commandchars=\\\{\}}
+---
+
+# Introduction
+This analysis builds on the M2 initial implementation to bring the Student Performance data mining project to functional completeness. Therefore, the goal of M3 is to make sure the entire analysis pipeline works from start to finish and produces meaningful results, which means that is not just code that runs, but what really matters are actual patterns and insights about student behavior.
+
+In M2, we applied K-Means clustering and found three student profiles: higher-performing, moderate, and academically at-risk. However, a number of questions remain open in this regard. For example: Are those three groups real, or is K-Means just forcing the data into three buckets? What specific rules separate one group from another? Are there unusual students who do not fit any group?
+
+Now in M3 answers these questions by introducing four additional new techniques on top of the M2 baseline, which techniques are the following:
+
+- **PCA (Principal Component Analysis):** Removes redundant features (in this case are G1, G2, G3, which provide the same information three times)  to allow a better identification of the other variable for the clustering algorithm.
+
+- **DBSCAN and Hierarchical Clustering:** Two alternative clustering methods that make different assumptions than K-Means, used to check whether the three-group structure holds up.
+
+- **Decision Tree:** Translates the statistical clusters into simple and human-readable rules, such as "if a student's second-period grade is above 12 and they have zero failures, then they are in the high-performing group."
+
+- **LOF (Local Outlier Factor):** This method identifies individual anomalies among student samples. Here the errors are not deleted, but rather than interesting cases worth of investigating.
+
+The same three discovery questions from M1 continue to guide the analysis:
+
+1. Do family and socioeconomic attributes form recognizable patterns linked to academic consistency?
+
+2. How do study habits and absences interact to shape academic performance patterns?
+
+3. What natural clusters of students emerge when combining demographic, family, and academic features?
+
+```{r setup, include=FALSE}
+# Setup Environment
+library(tidyverse)
+library(cluster)
+library(factoextra)
+library(corrplot)
+library(rpart)
+library(rpart.plot)
+library(dbscan)
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.width = 7,
+  fig.height = 4,
+  out.width = "90%"
+)
+```
+
+# Data Loading and Preprocessing
+```{r loading-data, echo=TRUE}
+# Load both datasets from GitHub repository 
+
+student_math <- read.csv(
+"https://raw.githubusercontent.com/Colochoo/cs4412-project/main/data/student-mat.csv",
+header = TRUE,
+sep = ",",
+stringsAsFactors = FALSE
+)
+
+student_por <- read.csv(
+"https://raw.githubusercontent.com/Colochoo/cs4412-project/main/data/student-por.csv",
+header = TRUE,
+sep = ",",
+stringsAsFactors = FALSE
+)
+
+# Add course identifier
+student_math$course <- "Math"
+student_por$course <- "Portuguese"
+
+# Merge both datasets
+student_data <- rbind(student_math, student_por)
+
+# Check structure
+str(student_data)
+
+# Check Dimensions
+cat("Dataset dimensions:", nrow(student_data), "students x", 
+    ncol(student_data), "attributes\n")
+```
+
+One dataset was generated from the merge of the two datasets (students from Math Course plus the students from Portuguese Language Course), which outcome result in a total of 1044 observations (students) and 34 attributes. However, we need first to convert text-based variables into numbers so the algorithms can process them.
+
+```{r data-preprocessing, echo=TRUE}
+# Convert attributes to numeric
+## Many variables in this dataset are stored as "yes"/"no" text.
+## Algorithms need numbers, so we convert: yes = 1, no = 0.
+
+student_data <- student_data %>%
+  mutate(across(
+    where(~ all(.x %in% c("yes", "no"))),
+    ~ ifelse(.x == "yes", 1, 0)
+  ))
+
+#Convert nominal answers in binary format to binary
+## sex: Male = 1, Female = 0
+## address: Rural = 1, Urban = 0
+## famsize: Greater than 3 = 1, Less/equal 3 = 0
+## Pstatus: Parents living Together = 1, Apart = 0
+student_data <- student_data %>%
+  mutate(
+    sex = ifelse(sex == "M", 1, 0),
+    address = ifelse(address == "R", 1, 0),
+    famsize = ifelse(famsize == "GT3", 1, 0),
+    Pstatus = ifelse(Pstatus == "T", 1, 0)
+  )
+
+#Convert nominal answers to numeric
+## NOTE: These numeric codes are arbitrary (e.g., "teacher" = 5, "health" = 2)
+## so they should NOT be used in distance-based algorithms like K-Means,
+## because the algorithm would think "teacher" is closer to "health" than 
+## to "services" just based on the numbers we assigned.
+student_data <- student_data %>%
+  mutate(
+    school = as.numeric(factor(school)),
+    Mjob = as.numeric(factor(Mjob)),
+    Fjob = as.numeric(factor(Fjob)),
+    reason = as.numeric(factor(reason)),
+    guardian = as.numeric(factor(guardian)),
+    course = as.numeric(factor(course))
+  )
+
+# Check structure in numeric form
+str(student_data)
+```
+
+The combined dataset contains both Mathematics and Portuguese students and includes demographic, family, and academic variables that can be used for exploratory analysis and clustering. Several nominal variables were converted into numeric form for general preprocessing and visualization. However, nominal variables were not used directly in K-means clustering unless they represented meaningful ordinal or quantitative information, since arbitrary numeric codes can create misleading distances between categories.
+
+
+# Feature Selection - Correlation Visual Matrix Data
+## Why These Variables?
+
+A critical question from M2 was: **Why were studytime, failures, absences, G1, G2, G3, Medu, and Fedu chosen for clustering instead of other variables?** 
+
+The answer comes from the correlation analysis below. Since we compute correlations between all numeric variables and the final grade (G3) to identify which variables carry the most meaningful signal about student academic performance.
+
+### Correlation Visual - Matrix Data
+```{r correlation-matrix, echo=FALSE, fig.width=9, fig.height=8, fig.align='center'}
+# To decide which variables to include in clustering, we look at 
+# how strongly each variable relates to the others
+
+# Select all numeric variables that could potentially be used
+numeric_data <- c(
+  "age", "Medu", "Fedu", "traveltime", "studytime", 
+  "failures", "famrel", "freetime", "goout", 
+  "Dalc", "Walc", "health", "absences", 
+  "G1", "G2", "G3"
+)
+
+#Visual Correlation Matrix
+cor_matrix <- cor(student_data[, numeric_data], use = "complete.obs")
+
+# Visualize as a heatmap
+## Blue = positive relationship, Red = negative relationship
+corrplot(
+  cor_matrix, 
+  method = "color",       
+  type = "upper",         
+  order = "hclust",       
+  tl.cex = 0.8,           
+  tl.col = "navyblue",       
+  addCoef.col = "black",  
+  number.cex = 0.65,       
+  col = colorRampPalette(c("red1", "linen", "skyblue"))(200),
+  title = "Correlation Heatmap: All Candidate Variables",
+  mar = c(0, 0, 2, 0)
+)
+```
+
+**Correlation Matrix Heatmap - Description:** Each cell shows how strongly two variables are related. Values close to +1.0 (light blue) mean they increase together. Values close to -1.0 (intense red) mean one increases while the other decreases. Values near 0 (white) mean no meaningful relationship. Therefore, variables with strong relationship to academic outcomes are the most useful for finding meaningful students groups.
+
+### Correlation Visual with G3 - Bar Chart
+```{r feature-selection-rationale, echo=FALSE, fig.width=7, fig.height=5}
+# Show correlations with G3 specifically, sorted by strength
+cor_with_g3 <- cor_matrix["G3", ]
+cor_with_g3 <- cor_with_g3[names(cor_with_g3) != "G3"]
+cor_df <- data.frame(
+  Variable = names(cor_with_g3),
+  Correlation = as.numeric(cor_with_g3)
+) %>%
+  arrange(desc(abs(Correlation)))
+
+# Color-code: selected variables in blue, rejected in gray
+cor_df$Selected <- ifelse(cor_df$Variable %in% 
+  c("studytime", "failures", "absences", "G1", "G2", "Medu", "Fedu"), 
+  "Selected for clustering", "Not selected")
+
+ggplot(cor_df, aes(x = reorder(Variable, abs(Correlation)), 
+                    y = Correlation, fill = Selected)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_manual(values = c("Selected for clustering" = "steelblue", 
+                                 "Not selected" = "gray70")) +
+  labs(
+    title = "Correlation of Each Variable with Final Grade (G3)",
+    subtitle = "Blue bars = variables selected for clustering",
+    x = "Variable",
+    y = "Correlation with Final Grade",
+    fill = ""
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+The bar chart above shows why the eight clustering variables were chosen:
+
+- **G1 and G2** have the strongest correlations with G3 (approximately 0.81 and 0.91). These are earlier grades that predict the final grade very well — students who do well early tend to keep doing well.
+- **Failures** has a moderate negative correlation (about -0.38). Students with more past failures tend to earn lower final grades. This is a meaningful academic risk indicator.
+- **Studytime** has a weak but positive correlation (about 0.16). More study time is associated with somewhat better grades.
+- **Absences** has a very weak negative correlation (about -0.05). Missing class has only a slight negative effect on grades in this dataset.
+- **Medu and Fedu** (mother's and father's education) have weak positive correlations. They represent the socioeconomic dimension of our discovery questions.
+
+Variables like **Dalc** (weekday alcohol), **Walc** (weekend alcohol), **goout**, **freetime**, **health**, and **traveltime** were excluded because their correlations with academic outcomes are very weak (close to zero), meaning they add noise without helping the clustering algorithm find meaningful student groups.
+
+
+# Clustering Preparation and Evaluation
+## Feature Scaling
+
+Before clustering, all selected features are standardized (scaled) so that each variable has a mean of 0 and a standard deviation of 1. This is important because in the variable "absences" (which range is between 0 to 75) would otherwise dominate on variables such as "studytime" (which range is between 1 to 4) due to its larger numeric range.
+
+```{r clustering-prep, echo=TRUE}
+# This ensures no single variable dominates just because it has bigger numbers.
+#   - The average becomes 0
+#   - One standard deviation equals 1
+
+cluster_vars <- c("studytime", "failures", "absences", "G1", "G2", "G3", "Medu", "Fedu")
+cluster_data <- student_data[, cluster_vars]
+cluster_data_scaled <- scale(cluster_data)
+```
+
+## Determining the Number of Clusters: Elbow Method & Silhouette Analysis
+
+Two methods are used together to determine the best number of clusters
+
+```{r elbow-and-silhouette, echo=FALSE, fig.width=10, fig.height=4.5}
+# Display multi-frame row layout
+par(mfrow = c(1, 2))
+
+# Elbow Method
+wss_values <- numeric(10)
+for (k in 1:10) {
+  set.seed(123)
+  km_temp <- kmeans(cluster_data_scaled, centers = k, nstart = 25)
+  wss_values[k] <- km_temp$tot.withinss
+}
+
+plot(1:10, wss_values, type = "b", pch = 19, col = "steelblue",
+     xlab = "Number of Clusters (k)", 
+     ylab = "Total Within-Cluster Sum of Squares",
+     main = "Elbow Method")
+points(3, wss_values[3], col = "red", pch = 19, cex = 2)
+text(3, wss_values[3], labels = "  k=3 chosen", pos = 4, col = "red", font = 2)
+
+# Silhouette Method
+sil_values <- numeric(9)
+for (k in 2:10) {
+  set.seed(123)
+  km_temp <- kmeans(cluster_data_scaled, centers = k, nstart = 25)
+  sil_values[k-1] <- mean(silhouette(km_temp$cluster, dist(cluster_data_scaled))[, 3])
+}
+
+plot(2:10, sil_values, type = "b", pch = 19, col = "steelblue",
+     xlab = "Number of Clusters (k)", 
+     ylab = "Average Silhouette Score",
+     main = "Silhouette Method")
+points(3, sil_values[2], col = "red", pch = 19, cex = 2)
+text(3, sil_values[2], labels = paste0("  k=3 (score: ", round(sil_values[2], 3), ")"), 
+     pos = 4, col = "red", font = 2)
+
+# Reset Display Layout
+par(mfrow = c(1, 1))
+```
+
+**What these plots tell us:** 
+
+- The elbow method shows that the rate of improvement drops off after k=3, meaning the addition of a 4th or 5th cluster will not significantly decrease within-cluster variance. 
+
+- The silhouette method confirms that k=3 produces a reasonable, though not necessarily optimal, cluster separation. The exact silhouette value gives an indication of how well-separated the clusters are.
+
+# M2 Baseline: K-Means Clustering (Recap)
+
+The K-Means solution from M2 is reproduced here as the starting point for all M3 comparisons.
+
+```{r kmeans-baseline, echo=FALSE}
+# K-Means baseline
+set.seed(123)
+km_res <- kmeans(cluster_data_scaled, centers = 3, nstart = 25)
+student_data$cluster_kmeans <- factor(km_res$cluster)
+
+cat("K-Means cluster sizes:")
+table(student_data$cluster_kmeans)
+```
+
+```{r kmeans-silhouette, echo=FALSE, fig.width=8, fig.height=5}
+# Silhoutte Analysis for K-means
+sil_km <- silhouette(km_res$cluster, dist(cluster_data_scaled))
+avg_sil_km <- round(mean(sil_km[, 3]), 4)
+
+cat("\nK-Means Average Silhouette Score:", avg_sil_km, "\n")
+cat("\nInterpretation guide:\n")
+cat("  0.71 - 1.00 = Strong structure (clear, well-separated clusters)\n")
+cat("  0.51 - 0.70 = Reasonable structure\n")
+cat("  0.26 - 0.50 = Weak structure (clusters overlap somewhat)\n")
+cat("  < 0.25      = No substantial structure\n")
+cat("\nOur score of", avg_sil_km, "indicates that clusters exist but their\n 
+boundaries are fuzzy, which is very typical in education data where\n
+student behaviors do not fall into perfectly distinct categories.\n")
+```
+
+### Silhouette Visual Plot Graph
+```{r kmeans-silhouette-plot, echo=FALSE, fig.width=8, fig.height=5}
+plot(sil_km, 
+     main = paste0("Silhouette Plot for K-Means Clusters (Avg Score: ", avg_sil_km, ")"),
+     col = c("#E41A1C", "#377EB8", "#4DAF4A"),
+     border = NA)
+```
+
+**What the silhouette plot shows:** Each individual horizontal bar symbolizes one student, whereas the size of each bar illustrates the level of confidence that the student is indeed part of that cluster and not one adjacent to it. Most students have positive silhouette values, meaning they are at least somewhat closer to their own cluster center than to the next closest cluster. However, several students in one cluster have very low or negative values, indicating that group is the least well-defined.
+
+### K-Means Clusters Visual Graph
+```{r kmeans-viz, echo=FALSE, fig.width=7.2, fig.height=5}
+# K-means Cluster Visual Graph
+fviz_cluster(
+  km_res, 
+  data = cluster_data_scaled,
+  geom = "point",
+  pointsize = 1.5
+) +
+  labs(title = "K-Means Student Clusters (k=3)")
+```
+
+## Cluster Profiles: Who Are These Students?
+
+### Cluster-level Summary Table
+```{r kmeans-profile, echo=FALSE}
+# Cluster Summary Table.
+
+km_profile <- student_data %>%
+  group_by(cluster_kmeans) %>%
+  summarise(
+    Count = n(),
+    Pct = paste0(round(n() / nrow(student_data) * 100, 1), "%"),
+    Avg_StudyTime = round(mean(studytime), 2),
+    Avg_Failures = round(mean(failures), 2),
+    Avg_Absences = round(mean(absences), 2),
+    Avg_G1 = round(mean(G1), 2),
+    Avg_G2 = round(mean(G2), 2),
+    Avg_G3 = round(mean(G3), 2),
+    Avg_Medu = round(mean(Medu), 2),
+    Avg_Fedu = round(mean(Fedu), 2)
+  )
+km_profile
+```
+
+The table displays the average academic performance (G1, G2, G3), study habits (study time), and behavioral factors (failures and absences) for each cluster, along with parental education levels (Medu and Fedu). This overview helps identify distinct patterns between clusters. For example, groups of students with higher grades and study time versus those with more absences or failures, which makes easier to interpret the characteristics and differences of each segment.
+
+### What Each Cluster Represents
+
+- **Cluster 1 - Steady Achievers:**  These students consistently recieve above average grades across all three evaluation periods. They have almost no history of failing classes, and their parents tend to have higher education levels. Think of these as the students who show up, do the work, and have a stable support system at home.
+
+- **Cluster 2 - Middle Ground:**  These students receive average grades, meaning that are not failing, but not excelling either. Their study habits, absences, and family backgrounds fall in the middle of the distribution (average performance in terms of studying). This is the largest group, representing the typical student experience in the dataset.
+
+- **Cluster 3 - Academically At-Risk:**  These students have the lowest average grades and the highest rates of past failures and absences. They represent students who may be struggling and could benefit from early intervention. Importantly, this does not mean they cannot succeed, rather means that their current behavioral patterns place them at a higher statistical risk.
+
+### Cluster Feature Selection Comparison Graph
+```{r cluster-feature-comparison, echo=FALSE, fig.width=8, fig.height=5}
+# Cluster Feature Selection Comparison Graph
+cluster_summary_long <- km_profile %>%
+  select(-Count, -Pct) %>%
+  pivot_longer(
+    cols = -cluster_kmeans,
+    names_to = "Feature",
+    values_to = "Value"
+  )
+
+ggplot(cluster_summary_long, aes(x = Feature, y = Value, fill = cluster_kmeans)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    title = "Cluster Feature Comparison: How the Three Groups Differ",
+    subtitle = "Each bar shows the average value for that feature within each cluster",
+    x = "Feature",
+    y = "Average Value",
+    fill = "Cluster"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+```
+
+----------
+
+# Technique 1: Principal Component Analysis (PCA)
+
+## Why PCA? The Redundancy Problem
+
+In M2, we can observed that G1, G2, and G3 are very highly correlated (ranging from 0.81 to 0.91). In other words, this means these three variables are telling us nearly the same thing: *"how well does a student performs academically?"* Then, When calculating the distance between two students in K-Means, the signal is repeated three times, which overshadows other valuable signals, such as study behavior or demographics.
+
+For instance, we use PCA, where it solves this by creating new variables (called "principal components") that combine the original variables in a way that removes redundancy. Thereforem, instead of asking three separate questions that all mean *"how smart is this student?"*, PCA will take all those questions and merge them into one, representing a more holistic approach to assessing the student's academic performance.
+
+In addition, PCA finds new directions in the data that captures the most variation. The first principal component (PC1) captures the direction of the greatest spread, then PC2 captures the next most, and so on.
+
+```{r pca-analysis, echo=FALSE}
+# Principal Component Analysis (PCA) Summary
+pca_res <- prcomp(cluster_data_scaled, center = FALSE, scale. = FALSE)
+
+pca_summary <- summary(pca_res)
+pca_summary
+```
+
+###  Principal Component Analysis (PCA) - Scree Plot Graph
+```{r pca-screeplot, echo=FALSE, fig.width=7, fig.height=4}
+# PCA Scree Plot Graph
+fviz_eig(pca_res, addlabels = TRUE, ylim = c(0, 50)) +
+  labs(title = "How Much Information Each Component Captures",
+       subtitle = "Each bar shows the % of total variance explained by that component")
+```
+
+### PCA - Variance Report
+```{r pca-variance-report, echo=FALSE}
+# PCA Variance Report 
+cum_var <- cumsum(pca_res$sdev^2 / sum(pca_res$sdev^2)) * 100
+cat("Cumulative variance explained (running total):\n")
+for (i in 1:length(cum_var)) {
+  cat(sprintf("  PC%d: %.1f%% of total information retained\n", i, cum_var[i]))
+}
+cat("\nIn other words, this report means: The first 3 components keep about", round(cum_var[3], 0), 
+    "%\n of the original information while reducing from 8 variables to just 3.\n")
+```
+
+## What Does Each Component Represent?
+
+### PCA - Loading Plot Graph
+```{r pca-loadings, echo=FALSE, fig.width=8, fig.height=5.5}
+# PCA Loading Plot Graph
+fviz_pca_var(pca_res, 
+             col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE) +
+  labs(title = "Which Variables Drive Each Component",
+       subtitle = "Arrows pointing in the same direction = correlated variables")
+```
+
+**Loading Plot Graph - Description:** Arrows pointing in the same direction represent variables that are correlated. Notice how G1, G2, and G3 point in almost the same direction, which means that is confirming they carry redundant information. Where, PCA collapses them into PC1 (the horizontal axis). Meanwhile, family background influence and absences point in a different direction, contributing more to PC2 (the vertical axis).
+
+The PCA results confirm that academic performance is the primary source of variation in the dataset, while behavioral factors such as absences, family background and failures form a secondary dimension, highlighting the multidimensional nature of student success.
+
+In domain terms:
+
+- **PC1 (horizontal axis)** = "Overall Academic Performance" — students on the left did well, whereas students on the right struggled. In other words, the horizontal axis it is primarily driven by the strong and correlated contributions of grade variables (G1, G2, G3), separating higher-performing students from lower-performing ones.
+
+- **PC2 (vertical axis)** = "Behavioral Risk and Engagement" — students higher up have more absences and family background relative to their grade level. In other words, the vertical axis differentiates students based on behavioral and background factors, where higher values are associated with increased absences, while lower values correspond to stronger academic performance and engagement.
+
+### PCA Perspective - K-Means Cluster Graph
+```{r pca-cluster-viz, echo=FALSE, fig.width=7.2, fig.height=5}
+# K-means Cluster PCA graph
+pca_scores <- as.data.frame(pca_res$x[, 1:2])
+pca_scores$cluster_kmeans <- student_data$cluster_kmeans
+
+ggplot(pca_scores, aes(x = PC1, y = PC2, color = cluster_kmeans)) +
+  geom_point(alpha = 0.6, size = 1.5) +
+  stat_ellipse(level = 0.95, linewidth = 0.8) +
+  labs(
+    title = "K-Means Clusters Viewed Through PCA Lens",
+    subtitle = "PCA removes grade redundancy, revealing clearer cluster separation",
+    x = paste0("PC1: Academic Performance (", round(cum_var[1], 1), "% of variance)"),
+    y = paste0("PC2: Behavioral Risk (", round(cum_var[2] - cum_var[1], 1), "% of variance)"),
+    color = "Cluster"
+  ) +
+  theme_minimal()
+```
+
+This PCA projection gives a much cleaner picture of the clusters than the original 8-dimensional space. The "Steady Achievers" (Cluster 1 - RED) group appears on one side (high academic performance), the "At-Risk" (Cluster 3 - BLUE) group on the other (low performance, higher risk), and the "Middle Ground" (Cluster 2 - GREEN) group in between.
+
+## K-Means on PCA-Reduced Data
+
+Does clustering on PCA-reduced data produce better-separated groups?
+
+```{r kmeans-pca, echo=FALSE}
+# K-MEANS ON PCA-REDUCED DATA
+pca_data_3pc <- pca_res$x[, 1:3]
+
+set.seed(123)
+km_pca <- kmeans(pca_data_3pc, centers = 3, nstart = 25)
+student_data$cluster_kmeans_pca <- factor(km_pca$cluster)
+
+sil_pca <- mean(silhouette(km_pca$cluster, dist(pca_data_3pc))[, 3])
+
+cat("Silhouette score comparison:\n")
+cat("  K-Means on original 8 features:", avg_sil_km, "\n")
+cat("  K-Means on 3 principal components:", round(sil_pca, 4), "\n")
+```
+
+The value for silhouette score went up from 0.1934 to 0.2727 after applying PCA, showing that clustering was performed better using PCA because the k-means algorithm could find better clusters due to the removal of unnecessary data through PCA.
+
+----------
+
+# Technique 2: Alternative Clustering Methods
+
+K-Means algorithm operates with an inherent presumption that assumes spherical-shaped and equally sized clusters. The data collected from students may not necessarily behave that way. Therfore, in order to check whether our three-group finding is genuine (and not just an artifact of K-Means' assumptions), we apply two alternative clustering methods.
+
+## DBSCAN: Density-Based Clustering
+
+DBSCAN stands for "Density-Based Spatial Clustering of Applications with Noise." Unlike K-Means algorithm, you do not need to provide DBSCAN with a number of clusters that should be formed beforehand. Rather, the algorithm will identify clusters based on density regions among students. Moreover, those students that cannot be assigned to a certain density region will be marked as noise students.
+
+### k-NN Distance Plot Graph
+```{r dbscan-eps, echo=FALSE, fig.width=7, fig.height=4}
+# DBSCAN Graph
+
+kNNdistplot(cluster_data_scaled, k = 5)
+abline(h = 3.0, col = "red", lty = 2)
+title("k-NN Distance Plot for Choosing DBSCAN eps Parameter")
+```
+
+**k-NN Distance Plot Graph - Description:** Each point on the curve represents one student's distance to their 5th nearest neighbor, sorted from smallest to largest. The "knee" point where the curve shoots upward tells us where the boundary between dense and sparse regions lies. We set eps at this knee.
+
+### DBSCAN results:
+```{r dbscan-clustering, echo=FALSE}
+# DBSCAN Clustering Summary
+# eps = neighborhood radius (how close students must be to be "neighbors")
+# minPts = minimum number of neighbors to form a dense region
+# Cluster 0 = "noise" — students who do not fit any group
+
+db_res <- dbscan(cluster_data_scaled, eps = 3.0, minPts = 5)
+student_data$cluster_dbscan <- factor(db_res$cluster)
+
+cat("Number of clusters found:", max(db_res$cluster), "\n")
+cat("Number of noise points (students not in any cluster):", 
+    sum(db_res$cluster == 0), "\n\n")
+cat("Cluster sizes:\n")
+table(student_data$cluster_dbscan)
+```
+
+### DBSCAN Clusters Points Graph
+```{r dbscan-viz, echo=FALSE, fig.width=7.2, fig.height=5}
+pca_scores$cluster_dbscan <- student_data$cluster_dbscan
+
+ggplot(pca_scores, aes(x = PC1, y = PC2, color = cluster_dbscan)) +
+  geom_point(alpha = 0.6, size = 1.5) +
+  labs(
+    title = "DBSCAN Clusters Projected on PCA Space",
+    subtitle = "Cluster 0 = noise points (students who do not fit any dense group)",
+    x = "PC1 (Academic Performance)", y = "PC2 (Behavioral Risk)",
+    color = "Cluster"
+  ) +
+  theme_minimal()
+```
+
+**What DBSCAN tells us:** If DBSCAN finds a similar number of groups as K-Means, it reinforces the idea that the cluster structure is real. If it finds fewer groups (e.g., merging moderate and high-performing students into one large cluster), it suggests those two groups are not as distinct as K-Means implies. The noise points are especially interesting, which they represent students who are genuinely unusual.
+
+## Hierarchical Clustering: Ward's Method
+
+Hierarchical clustering works bottom-up: it starts with each student as their own cluster, then repeatedly merges the two most similar clusters until everything is in one group. The result is a tree diagram (dendrogram) that shows the full merging history.
+
+```{r hierarchical-clustering, echo=FALSE}
+# HIERARCHICAL CLUSTERING
+set.seed(123)
+sample_idx <- sample(1:nrow(cluster_data_scaled), 200)
+hc_sample <- cluster_data_scaled[sample_idx, ]
+
+hc_res_sample <- hclust(dist(hc_sample), method = "ward.D2")
+```
+
+### Dendrogram Graph 
+```{r dendrogram, echo=FALSE, fig.width=9, fig.height=5}
+plot(hc_res_sample, labels = FALSE, hang = -1, 
+     main = "Dendrogram: How Students Merge Into Groups (200-Student Sample)",
+     sub = "Colored boxes show the 3-cluster cut",
+     xlab = "Students", ylab = "Distance Between Merged Clusters")
+rect.hclust(hc_res_sample, k = 3, border = c("red", "blue", "green"))
+```
+
+**Dendrogram - Description:** The height at which two branches merge shows how different those two groups are. The colored boxes show where we "cut" the tree to get 3 clusters. Notice that the tree splits into two main branches first (high-performing vs. others), then the smaller branch splits into moderate and at-risk. This matches the structure K-Means found.
+
+```{r hierarchical-full, echo=FALSE, fig.width=8, fig.height=5}
+# Apply to full dataset and evaluate
+hc_full <- hclust(dist(cluster_data_scaled), method = "ward.D2")
+hc_clusters <- cutree(hc_full, k = 3)
+student_data$cluster_hc <- factor(hc_clusters)
+
+sil_hc <- silhouette(hc_clusters, dist(cluster_data_scaled))
+avg_sil_hc <- round(mean(sil_hc[, 3]), 4)
+
+cat("Hierarchical Clustering Average Silhouette Score:", avg_sil_hc, "\n")
+```
+
+### Hierarchical - Silhouette Visual Plot Graph
+```{r hc-silhouette-plot, echo=FALSE, fig.width=8, fig.height=5}
+plot(sil_hc, 
+     main = paste0("Silhouette Plot for Hierarchical Clusters (Avg Score: ", avg_sil_hc, ")"),
+     col = c("#E41A1C", "#377EB8", "#4DAF4A"),
+     border = NA)
+```
+
+From the above silhouette plot of hierarchical clustering, it can be observed that the silhouette score obtained is 0.141, which implies that the clusters are not well separated from each other. Cluster 3 seems to be performing better than other clusters due to its high average value of silhouette score (~0.40). Moderate separation can be seen in case of cluster 2 (~0.17), while Cluster 1 has a very low average (~0.08) and includes many observations with negative silhouette values, indicating poor assignment and overlap with other clusters.
+
+Overall, this result suggests that hierarchical clustering does not capture strong or well-separated group structures in the data compared to other methods.
+
+### Hierarchical Perspective - Cluster Graph
+```{r hc-viz, echo=FALSE, fig.width=7.2, fig.height=5}
+pca_scores$cluster_hc <- student_data$cluster_hc
+
+ggplot(pca_scores, aes(x = PC1, y = PC2, color = cluster_hc)) +
+  geom_point(alpha = 0.6, size = 1.5) +
+  stat_ellipse(level = 0.95, linewidth = 0.8) +
+  labs(
+    title = "Hierarchical Clusters (Ward's Method, k=3) on PCA Space",
+    x = "PC1 (Academic Performance)", y = "PC2 (Behavioral Risk)", 
+    color = "Cluster"
+  ) +
+  theme_minimal()
+```
+
+The hierarchical clustering plot in PCA space reveals that the clusters do not have distinct separation, with considerable overlap among them, especially Cluster 1 (Steady Achievers - RED) and Cluster 2 (Middle Ground - GREEN). Cluster 3 (At-Risk - BLUE) appears relatively tighter and more distinct, primarily positioned at the left end of PC1 (lower academic performance).
+
+Cluster 2 usually denotes the high values of PC1 (high academic performance), whereas Cluster 1 appears in between and overlaps with both categories, suggesting that there are no distinct differences. The spread vertically (PC2) signifies the variance in behavioral risk, but it cannot distinguish the clusters.
+
+Therefore, the plot implies that hierarchical clustering finds difficulty in forming clusters distinctly in this dataset, which coincides with the previously noted silhouette score.
+
+## Clustering Comparison: Do the Methods Agree?
+
+### Silhouette Score Comparison
+```{r clustering-comparison, echo=FALSE}
+cat("(Higher = better-separated clusters)\n\n")
+cat("  K-Means (8 original features):      ", avg_sil_km, "\n")
+cat("  K-Means (3 PCA components):          ", round(sil_pca, 4), "\n")
+cat("  Hierarchical Clustering (Ward, k=3): ", avg_sil_hc, "\n")
+```
+
+
+### K-Means vs Hierarchical Cross-tabulation:
+```{r clustering-crosstab, echo=FALSE}
+cat("(Large numbers on the diagonal = strong agreement)\n\n")
+table(KMeans = student_data$cluster_kmeans, Hierarchical = student_data$cluster_hc)
+```
+
+
+**What this comparison means:** In case most students get assigned to respective categories by both techniques (indicated by high numbers along the diagonal of the cross-tabulation table), it shows that the three-category system is stable and does not rely upon whichever classification technique has been used. On the other hand, differences between two techniques would suggest ambiguity in groups.
+
+----------
+
+# Technique 3: Decision Tree Classification
+
+The K-Means algorithm tells us *that* three groups exist, but it does not tell us *why* a student belongs to one group versus another. Decision Trees fill this gap by learning simple, human-readable rules that explain cluster membership.
+
+**Important:** We are not doing prediction here. We are using the cluster labels as a target variable and asking the decision tree to explain the patterns. This is a legitimate use of classification as an interpretability tool.
+
+### Decision Tree Visual Diagram
+```{r decision-tree, echo=FALSE}
+# DECISION TREE
+tree_data <- student_data[, c(cluster_vars, "cluster_kmeans")]
+tree_data$cluster_kmeans <- factor(tree_data$cluster_kmeans, 
+                                    labels = c("High", "Moderate", "AtRisk"))
+
+set.seed(123)
+dt_model <- rpart(
+  cluster_kmeans ~ ., 
+  data = tree_data,
+  method = "class",
+  control = rpart.control(maxdepth = 4, cp = 0.01)
+)
+```
+
+```{r tree-plot, echo=FALSE, fig.width=10, fig.height=6.5}
+rpart.plot(dt_model, 
+           type = 4, 
+           extra = 104,
+           under = TRUE,
+           fallen.leaves = TRUE,
+           main = "Decision Tree: What Rules Separate Student Groups?",
+           cex = 0.7)
+```
+
+**Decision Tree - Description:** Start at the top. At each node, the tree asks a yes/no question about one variable. If the answer is yes, go left; if no, go right. Follow the path down to reach a leaf node, which tells you the predicted cluster. The percentage shows how many students at that node belong to each cluster.
+
+For example, if the first split is on G2, it means the tree found that second-period grade is the single most useful variable for separating student groups.
+
+## Feature Importance: What Matters Most?
+
+### Feature Importance Visual Bar Char
+```{r tree-importance, echo=FALSE, fig.width=7, fig.height=4.5}
+var_imp <- dt_model$variable.importance
+var_imp_df <- data.frame(
+  Variable = names(var_imp),
+  Importance = as.numeric(var_imp)
+) %>%
+  arrange(desc(Importance)) %>%
+  mutate(
+    Label = case_when(
+      Variable == "G1" ~ "G1 (1st period grade)",
+      Variable == "G2" ~ "G2 (2nd period grade)",
+      Variable == "G3" ~ "G3 (Final grade)",
+      Variable == "failures" ~ "failures (past class failures)",
+      Variable == "Medu" ~ "Medu (mother's education)",
+      Variable == "Fedu" ~ "Fedu (father's education)",
+      Variable == "studytime" ~ "studytime (weekly study hours)",
+      Variable == "absences" ~ "absences (days missed)",
+      TRUE ~ Variable
+    )
+  )
+
+ggplot(var_imp_df, aes(x = reorder(Label, Importance), y = Importance)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +
+  labs(
+    title = "Feature Importance: What Separates Student Groups?",
+    subtitle = "Higher importance = more useful for distinguishing clusters",
+    x = "", y = "Importance Score"
+  ) +
+  theme_minimal()
+```
+
+**What this tells us:** The feature importance bar chart is basically a ranked list of what matters most for telling students apart. Variables related to grades have the highest priority. where the decision tree uses this factor predominantly in differentiating between the classes. History of failing grades follows this variable, then educational background of parents and studying hours. The variable “absences” comes last, which aligns with M2’s result regarding absences alone being a poor predictor. absences alone are a weak indicator.
+
+### How well does the tree explain the clusters?
+```{r tree-accuracy, echo=FALSE}
+
+tree_pred <- predict(dt_model, tree_data, type = "class")
+accuracy <- mean(tree_pred == tree_data$cluster_kmeans)
+cat("Decision tree accuracy on cluster labels:", round(accuracy * 100, 1), "%\n")
+cat("\nThis means", round(accuracy * 100, 1), "% of students can be correctly\n")
+cat("assigned to their K-Means cluster using just a few simple rules.\n")
+
+cat("\nConfusion Matrix:\n")
+table(Predicted = tree_pred, Actual = tree_data$cluster_kmeans)
+```
+
+The decision tree was able to obtain an accuracy of 88.7% which implies that there is orderliness among the resulting clusters and thus making them predictable through decision trees. In addition, the fact that there is some overlap within the moderate cluster while the other two are distinct indicates that the clusters generated have meaning.
+
+----------
+
+# Technique 4: Anomaly Detection - Local Outlier Factor (LOF)
+
+Clustering describes the typical student. But what about students who do not fit any typical pattern? LOF identifies these unusual cases by measuring how isolated each student is compared to their nearest neighbors.
+
+A LOF score close to 1.0 means the student is in a region of normal density, which they look like the students around them. A LOF score well above 1.0 means the student is in a less dense region, which they are more isolated, more unusual.
+
+### LOF Anomaly Detection Results:
+```{r lof-detection, echo=FALSE}
+# Local Outlier Factor (LOF)
+# minPts = 10 means we consider each student's 10 nearest neighbors
+# LOF > 1.5 is our threshold for calling someone an "anomaly"
+
+lof_scores <- lof(cluster_data_scaled, minPts = 10)
+student_data$lof_score <- lof_scores
+
+student_data$is_anomaly <- ifelse(lof_scores > 1.5, "Anomaly", "Normal")
+cat("  Normal students:", sum(student_data$is_anomaly == "Normal"), "\n")
+cat("  Anomalous students:", sum(student_data$is_anomaly == "Anomaly"), "\n")
+cat("  Anomaly rate:", round(mean(student_data$is_anomaly == "Anomaly") * 100, 1), "%\n")
+```
+
+### Distribution Histogram Graph by LOF Scores
+```{r lof-distribution, echo=FALSE, fig.width=7, fig.height=4}
+ggplot(student_data, aes(x = lof_score)) +
+  geom_histogram(bins = 50, fill = "steelblue", color = "white") +
+  geom_vline(xintercept = 1.5, color = "red", linetype = "dashed", linewidth = 0.8) +
+  labs(
+    title = "Distribution of LOF Scores Across All Students",
+    subtitle = "Most students score near 1.0 (normal); scores above 1.5 (red line) are flagged",
+    x = "Local Outlier Factor Score",
+    y = "Number of Students"
+  ) +
+  theme_minimal()
+```
+
+The dataset is mostly consistent, with only a small number of unusual cases
+
+### PCA Scatter Plot with Anomalies
+```{r lof-pca-viz, echo=FALSE, fig.width=7.2, fig.height=5}
+pca_scores$is_anomaly <- student_data$is_anomaly
+
+ggplot(pca_scores, aes(x = PC1, y = PC2, color = is_anomaly)) +
+  geom_point(alpha = 0.6, size = 1.5) +
+  scale_color_manual(values = c("Anomaly" = "red", "Normal" = "gray60")) +
+  labs(
+    title = "Where Are the Anomalous Students?",
+    subtitle = "Red dots = students flagged by LOF as unusual relative to their neighbors",
+    x = "PC1 (Academic Performance)", y = "PC2 (Behavioral Risk)", color = "Status"
+  ) +
+  theme_minimal()
+```
+
+These students do not follow the typical patterns captured by clustering.
+
+## Who Are These Anomalous Students?
+
+### Anomaly Investigation Table
+```{r anomaly-profile, echo=FALSE}
+# ANOMALY INVESTIGATION
+anomaly_students <- student_data %>% filter(is_anomaly == "Anomaly")
+normal_students <- student_data %>% filter(is_anomaly == "Normal")
+
+anomaly_comparison <- data.frame(
+  Feature = cluster_vars,
+  Anomaly_Avg = round(sapply(anomaly_students[cluster_vars], mean), 2),
+  Normal_Avg = round(sapply(normal_students[cluster_vars], mean), 2),
+  Difference = round(sapply(anomaly_students[cluster_vars], mean) - 
+                       sapply(normal_students[cluster_vars], mean), 2)
+)
+anomaly_comparison
+```
+
+These anomalous students are not "bad data", meaning they are simply students with unique combinations of traits. For instance:
+
+- A student with very high absences but still getting good grades (their behavior does not match their academic outcome)
+- A student with highly educated parents but a history of failures (their socioeconomic background does not predict their struggles)
+- A student at the extreme edge of the grade distribution (scoring  0 on G3 or a perfect 20) while having average everything else
+
+In a classroom environment, these students would be considered unique because they don’t fit into conventional categories. They should be considered special cases.
+
+## Which clusters do the anomalous students come from?
+
+### Cluster's Anomalies Table
+```{r anomaly-cluster-dist, echo=FALSE}
+anom_table <- table(Cluster = student_data$cluster_kmeans[student_data$is_anomaly == "Anomaly"])
+print(anom_table)
+```
+
+The table shown above, shows how the detected anomalies of students can be represented within the k-means clustering method. Of the total of 16 anomalies that have been detected, there are 9 that fall within Cluster 1 (Steady Achievers), 3 that fall within Cluster 2 (Middle Ground), and 4 that are in Cluster 3 (At-Risk). What this implies is that anomalies exist within all the clusters as opposed to just one. Therefore, the structure seems fairly stable.
+
+## Anomaly Conclusion
+
+The LOF analysis indicates that despite the majority of the students showing predictable behavior and learning trends, there exists a minority of them who exhibit irregularities in terms of the attributes observed in them. The unusual students can be distinguished by having exceptionally high numbers of absences, along with inconsistencies in the expected correlation between their performance and backgrounds. The irregular students' locations being spread out across the principal components space indicates that they are definitely not clustered into any identifiable cluster.
+
+----------
+
+# Updated Discovery Question Progress
+
+## Question 1: Family and Socioeconomic Patterns
+
+The expanded analysis provides stronger evidence for this question from multiple angles. The **correlation heatmap** shows that Medu and Fedu have weak but positive correlations with grades (around 0.15-0.20), meaning children of more educated parents tend to score slightly higher. **PCA** separates this socioeconomic signal onto PC2, confirming it is a real but secondary dimension, meaning that academic history is primary, family background is secondary. The **decision tree** uses parental education in some of its splits, showing that among students with similar grades, mother's or father's education can tip the balance between the moderate and high-performing groups.
+
+**To conclude:** Family and socioeconomic factors do form recognizable patterns associated with academic performance, but they operate as a supporting influence, not a dominant one. A student's own academic trajectory (past grades, failure history) matters more than their parents' education level.
+
+## Question 2: Study Habits, Absences, and Performance
+
+The **decision tree feature importance** ranking provides the clearest answer. In order of importance for separating student groups: (1) grade trajectory, (2) failure history, (3) parental education, (4) study time, (5) absences. Study time and absences both contribute, but study time matters slightly more than absences. The **LOF anomalies** include students who defy expectations. For example: "students with high absences but decent grades". These exceptions show that absences alone are a poor predictor and what matters more is the overall behavioral pattern.
+
+**To conclude:** Study habits and absences interact with performance, but not equally. Failure history is a much stronger warning sign than either study time or absence count. A student who has failed classes before is more likely to struggle than a student who simply misses some days.
+
+## Question 3: Natural Student Clusters
+
+The **clustering comparison** provides the strongest evidence yet for three natural student groups. K-Means and Hierarchical Clustering both find three groups with similar profiles, and their silhouette scores are comparable. The **PCA visualization** shows these groups are somewhat separable along the academic performance axis (PC1) and the behavioral risk axis (PC2). **DBSCAN** brings more clarity to the situation since this method allows identifying fewer clusters, as well as labeling border members as noises based on the density criterion.
+
+**To conclude:** There are three natural clusters of students: Steady Achievers, Middle Ground, and Academically At-Risk. These groups are shaped primarily by grade history and failure patterns, with socioeconomic background playing a supporting role. The boundaries between groups are gradual, but the overall structure is consistent across multiple methods.
+
+----------
+
+# Summary of All Techniques and Key Findings
+
+### Techniques Applied:
+```{r final-techniques, echo=FALSE}
+
+cat("  1. PCA: Reduced 8 features to 3 components, preserving ~", 
+    round(cum_var[3], 0), "% of variance\n")
+cat("  2. DBSCAN: Density-based clustering with noise detection\n")
+cat("  3. Hierarchical Clustering: Ward's method, k=3\n")
+cat("  4. Decision Tree: Interpretable rules for cluster membership\n")
+cat("  5. LOF Anomaly Detection:", sum(student_data$is_anomaly == "Anomaly"), 
+    "unusual students identified\n\n")
+```
+
+### Silhouette Scores:
+```{r final-s-scores, echo=FALSE}
+cat("  K-Means (original):     ", avg_sil_km, "\n")
+cat("  K-Means (PCA-reduced):  ", round(sil_pca, 4), "\n")
+cat("  Hierarchical (Ward):    ", avg_sil_hc, "\n\n")
+```
+
+### Key Findings:
+
+- Three student profiles are robust across multiple methods.
+- Failure history is the strongest behavioral risk indicator.
+- Family education is significant, but plays as a secondary role.
+- Study time and absences have a minimal impact.
+- Boundary students exist (low silhouette scores are normal in educational datasets).
+- LOF anomalies represent students with mismatched profiles worthy of individual investigation.
+
+
+# Conclusion
+
+The M3 implementation brings the Student Performance analysis pipeline to functional completeness. Starting from the M2 K-Means baseline, we introduced other techniques such as PCA, which remove feature redundancy, compared K-Means against DBSCAN and Hierarchical Clustering to validate the three-group structure, used Decision Trees to generate interpretable rules explaining cluster membership, and applied LOF to identify unusual students who defy typical patterns.
+
+The key insight from my investigation is  that student academic performance is shaped primarily by academic history (prior grades and failure history), with socioeconomic factors (parental education) playing a supporting role and behavioral indicators (study time, absences) contributing weakly. The three-group structure is consistent across methods, giving us confidence that these profiles reflect genuine patterns in the data rather than algorithmic artifacts.
+
+What remains for M4 is polish: critical assessment of limitations, final presentation-quality visualizations, and a complete cohesive narrative to put everything together.
