@@ -10,6 +10,31 @@ This project applies data mining techniques to the UCI Student Performance Datas
 
 The project emphasizes **pattern discovery and behavioral segmentation** rather than predictive modeling.
 
+### <ins>Project Structure</ins>
+
+```
+cs4412-project/
+├── data/                          # Data Folder
+│   ├── student-mat.csv            # Math course student data
+│   ├── student-por.csv            # Portuguese course student data
+│   └── student.txt                # Description of all attributes
+│
+├── notebooks/                     # Code Folder
+│   ├── M2_Analysis.Rmd            # M2: Initial implementation (K-Means baseline)
+│   └── M3_Analysis.Rmd            # M3: Complete implementation (all techniques)
+│
+├── docs/                          # Summary Docs Folder
+│   ├── Proposal.pdf               # M1: Proposal document
+│   ├── M2_Analysis_Document.pdf   # M2: Summary of Initial Analysis
+│   └── M3_Analysis_Document.pdf   # M3: Summary of Complete Analysis
+│
+├── outputs/                       # Code Output clean PDF Folder
+│   ├── M2_Analysis.pdf            # M2: Knitted notebook output
+│   └── M3_Analysis.pdf            # M3: Knitted notebook output
+│
+└── README.md
+```
+
 ### <ins>**[IMPORTANT]** - Prerequisites Before Opening Any Files</ins>
 
 #### **1. Install R (Required)**  
@@ -78,16 +103,11 @@ Cortez, P. and Silva, A. (2008). *Using Data Mining to Predict Secondary School 
 Available at the UCI Machine Learning Repository:\
 https://archive-beta.ics.uci.edu/dataset/320/student+performance
 
-&emsp;Data Description:\
-&emsp;&emsp;student-mat.csv = Students' Dataset from Mathematics Course\
-&emsp;&emsp;student-por.csv = Students' Dataset from Portuguese Language Course\
-&emsp;&emsp;student.txt = Explanation and Description of all the attributes of both datasets
-
 ### Please review the Proposal PDF for a straightforward synopsis of the project
 &emsp;Proposal.pdf Document:\
 &emsp;https://github.com/Colochoo/cs4412-project/blob/main/docs/Proposal.pdf
 
-### Main Goal Objective - Discovery Questions
+### <ins>Main Goal Objective - Discovery Questions</ins>
 Focused on finding pattern discovery using the following questions:
 
     1.	Do family and socioeconomic attributes form recognizable patterns associated with academic consistency?
@@ -118,7 +138,8 @@ The M2 analysis investigates factors affecting student academic performance usin
 
 &emsp;3. Open the folder of the cloned repository in Positron or your IDE
 
-&emsp;4. Open `notebooks/M2_Analysis.Rmd`
+&emsp;4. Open `notebooks/M2_Analysis.Rmd`\
+&emsp;&emsp;* *(see **File in GitHub**)* --> [M2_Analysis.Rmd](https://github.com/Colochoo/cs4412-project/blob/main/notebooks/M2_Analysis.Rmd)
 
 &emsp;5. Click **Knit** (or **Render**) to run the full analysis — data loads directly from this repository's `data/` folder via GitHub raw URLs
 
@@ -166,7 +187,8 @@ Building on M2, the following techniques were added:
 
 &emsp;3. Open the folder of the cloned repository in Positron or your IDE
 
-&emsp;4. Open `notebooks/M3_Analysis.Rmd`
+&emsp;4. Open `notebooks/M3_Analysis.Rmd`\
+&emsp;&emsp;* *(see **File in GitHub**)* --> [M3_Analysis.Rmd](https://github.com/Colochoo/cs4412-project/blob/main/notebooks/M3_Analysis.Rmd)
 
 &emsp;5. Click **Knit** (or **Render**) to run the full analysis — data loads directly from this repository's `data/` folder via GitHub raw URLs
 
