@@ -3,7 +3,8 @@
 **Author:** Cesar Arevalo Colocho  
 **Email:** careval3@students.kennesaw.edu  
 **Course:** CS 4412 – Data Mining – Section W01, Kennesaw State University  
-**Semester:** Spring 2026
+**Semester:** Spring 2026  
+**Survey Template:** [Live Website](https://colochoo.github.io/cs4412-project/)
 
 ---
 
@@ -131,10 +132,12 @@ You do **not** need this template if you are only working with the original UCI 
 
 ### How to deploy it
 
-The site is hosted via GitHub Pages. To set it up for your own use:
+The live template is available **[here](https://colochoo.github.io/cs4412-project/)**
+
+To deploy your own copy:
 
 1. Fork or clone this repository
-2. Follow the **Setup Guide** tab inside the site to connect it to your own Google Spreadsheet via Google Apps Script
+2. Follow the **Setup Guide** tab inside the site to setup the webpage and connect it to your own Google Spreadsheet via Google Apps Script
 3. Set it up in your own website to make it public
 
 >The form is free to use for any academic research or replication study. Attribution is appreciated but not required.
