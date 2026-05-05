@@ -202,9 +202,7 @@ Consolidated the full analysis pipeline into a cohesive final report that direct
 - Students flagged by LOF often have mismatched socioeconomic and academic profiles
 - Study time and absences do not reliably separate clusters on their own
 
-<<<<<<< HEAD
-📄 [Final Report](notebooks/FinalReport.pdf) · 📓 [M4 Notebook](notebooks/M4_Analysis.Rmd) · 📊 [M4 Notebook Output](outputs/M4_Analysis.pdf)
-
+📄 [Final Report](docs/FinalReport.pdf) · 📓 [M4 Notebook](notebooks/M4_Analysis.Rmd) · 📊 [M4 Notebook Output](outputs/M4_Analysis.pdf)
 
 ---
 
@@ -283,10 +281,6 @@ The project follows a sequential data mining pipeline applied across milestones 
 │      • Critical assessment, limitations, ethical review     │
 └─────────────────────────────────────────────────────────────┘
 ```
-=======
-📄 [Final Report](docs/FinalReport.Rmd) · 📓 [M4 Notebook](notebooks/M4_Analysis.Rmd) · 📊 [M4 Notebook Output](outputs/M4_Analysis.pdf)
->>>>>>> c07845397bc8b1a20746b0d7c76a9062778443b2
-
 ---
 
 ## Dataset
