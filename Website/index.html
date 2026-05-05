@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A reusable survey template for collecting secondary school student performance data, compatible with the UCI Student Performance Dataset schema.">
+  <title>Student Performance Survey — Data Collection Template</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-icon">📊</div>
+    <div class="header-text">
+      <h1>Student Performance Survey</h1>
+      <p>Secondary School Data Collection Template</p>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════ TAB NAV ══════════════════════════ -->
+<nav class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" data-tab="survey">
+      <span>📋</span> Survey
+    </button>
+    <button class="tab-btn" data-tab="about">
+      <span>ℹ️</span> About &amp; Purpose
+    </button>
+    <button class="tab-btn" data-tab="setup">
+      <span>⚙️</span> Setup Guide
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════ MAIN ═════════════════════════════ -->
+<main class="main-content">
+
+  <!-- ─────────────────── SURVEY TAB ─────────────────── -->
+  <div id="tab-survey" class="tab-panel active">
+
+    <div class="panel-intro">
+      <h2>Student Data Entry Form</h2>
+      <p>This form collects 34 attributes about a student's demographic background, family structure, study habits, and academic performance. All fields are required.</p>
+    </div>
+
+    <form id="survey-form" novalidate>
+
+      <!-- ── Section 1: School & Course ── -->
+      <div class="form-section">
+        <div class="section-header">
+          <span class="section-num">1</span>
+          <div>
+            <h3>School &amp; Course Information</h3>
+            <p>Basic enrollment details</p>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="field-label">School <span class="attr-tag">school</span></label>
+            <div class="radio-card-group">
+              <label class="radio-card">
+                <input type="radio" name="school" value="GP">
+                <span class="rc-box"><strong>GP</strong><small>Gabriel Pereira</small></span>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="school" value="MS">
+                <span class="rc-box"><strong>MS</strong><small>Mousinho da Silveira</small></span>
+              </label>
+            </div>
+            <span class="field-hint">Rename these for your own institution</span>
+          </div>
+
+          <div class="form-group">
+            <label class="field-label">Course <span class="attr-tag">course</span></label>
+            <div class="radio-card-group">
+              <label class="radio-card">
+                <input type="radio" name="course" value="Math">
+                <span class="rc-box"><strong>Math</strong><small>Mathematics</small></span>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="course" value="Por">
+                <span class="rc-box"><strong>Por</strong><small>Portuguese Language</small></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" style="max-width:400px;">
+          <label class="field-label">Reason for choosing this school <span class="attr-tag">reason</span></label>
+          <select name="reason">
+            <option value="">— Select a reason —</option>
+            <option value="home">Close to home</option>
+            <option value="reputation">School reputation</option>
+            <option value="course">Course preference</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ── Section 2: Demographics ── -->
+      <div class="form-section">
+        <div class="section-header">
+          <span class="section-num">2</span>
+          <div>
+            <h3>Student Demographics</h3>
+            <p>Personal background information</p>
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="field-label">Biological Sex <span class="attr-tag">sex</span></label>
+            <div class="radio-card-group">
+              <label class="radio-card">
+                <input type="radio" name="sex" value="F">
+                <span class="rc-box"><strong>Female</strong></span>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="sex" value="M">
+                <span class="rc-box"><strong>Male</strong></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="field-label">Age <span class="attr-tag">age</span></label>
+            <input type="number" name="age" min="15" max="22" placeholder="15 – 22">
+            <span class="field-hint">Between 15 and 22 years</span>
+          </div>
+
+          <div class="form-group">
+            <label class="field-label">Home Address Type <span class="attr-tag">address</span></label>
+            <div class="radio-card-group">
+              <label class="radio-card">
+                <input type="radio" name="address" value="U">
+                <span class="rc-box"><strong>Urban</strong></span>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="address" value="R">
+                <span class="rc-box"><strong>Rural</strong></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Section 3: Family Background ── -->
+      <div class="form-section">
+        <div class="section-header">
+          <span class="section-num">3</span>
+          <div>
+            <h3>Family Background</h3>
+            <p>Household structure and parental information</p>
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="field-label">Family Size <span class="attr-tag">famsize</span></label>
+            <div class="radio-card-group col">
+              <label class="radio-card">
+                <input type="radio" name="famsize" value="LE3">
+                <span class="rc-box"><strong>LE3</strong><small>3 members or fewer</small></span>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="famsize" value="GT3">
+                <span class="rc-box"><strong>GT3</strong><small>More than 3 members</small></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="field-label">Parents' Cohabitation <span class="attr-tag">Pstatus</span></label>
+            <div class="radio-card-group col">
+              <label class="radio-card">
+                <input type="radio" name="Pstatus" value="T">
+                <span class="rc-box"><strong>T</strong><small>Living together</small></span>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="Pstatus" value="A">
+                <span class="rc-box"><strong>A</strong><small>Living apart</small></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="field-label">Primary Guardian <span class="attr-tag">guardian</span></label>
+            <select name="guardian">
+              <option value="">— Select —</option>
+              <option value="mother">Mother</option>
+              <option value="father">Father</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="field-label">Mother's Education Level <span class="attr-tag">Medu</span></label>
+            <select name="Medu">
+              <option value="">— Select level —</option>
+              <option value="0">0 — None</option>
+              <option value="1">1 — Primary education (4th grade)</option>
+              <option value="2">2 — 5th to 9th grade</option>
+              <option value="3">3 — Secondary education</option>
+              <option value="4">4 — Higher education</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="field-label">Father's Education Level <span class="attr-tag">Fedu</span></label>
+            <select name="Fedu">
+              <option value="">— Select level —</option>
+              <option value="0">0 — None</option>
+              <option value="1">1 — Primary education (4th grade)</option>
+              <option value="2">2 — 5th to 9th grade</option>
+              <option value="3">3 — Secondary education</option>
+              <option value="4">4 — Higher education</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="field-label">Mother's Occupation <span class="attr-tag">Mjob</span></label>
+            <select name="Mjob">
+              <option value="">— Select occupation —</option>
+              <option value="teacher">Teacher</option>
+              <option value="health">Health sector</option>
+              <option value="services">Civil services</option>
+              <option value="at_home">At home</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="field-label">Father's Occupation <span class="attr-tag">Fjob</span></label>
+            <select name="Fjob">
+              <option value="">— Select occupation —</option>
+              <option value="teacher">Teacher</option>
+              <option value="health">Health sector</option>
+              <option value="services">Civil services</option>
+              <option value="at_home">At home</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Section 4: Study Habits & Support ── -->
+      <div class="form-section">
+        <div class="section-header">
+          <span class="section-num">4</span>
+          <div>
+            <h3>Study Habits &amp; Academic Support</h3>
+            <p>How the student studies and what support they receive</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="field-label">Home-to-School Travel Time <span class="attr-tag">traveltime</span></label>
+          <div class="scale-buttons" data-field="traveltime">
+            <button type="button" class="scale-btn" data-value="1">1<span>&lt;15 min</span></button>
+            <button type="button" class="scale-btn" data-value="2">2<span>15–30 min</span></button>
+            <button type="button" class="scale-btn" data-value="3">3<span>30–60 min</span></button>
+            <button type="button" class="scale-btn" data-value="4">4<span>&gt;1 hour</span></button>
+          </div>
+          <input type="hidden" name="traveltime" id="traveltime-hidden">
+        </div>
+
+        <div class="form-group">
+          <label class="field-label">Weekly Study Time (outside school) <span class="attr-tag">studytime</span></label>
+          <div class="scale-buttons" data-field="studytime">
+            <button type="button" class="scale-btn" data-value="1">1<span>&lt;2 hrs</span></button>
+            <button type="button" class="scale-btn" data-value="2">2<span>2–5 hrs</span></button>
+            <button type="button" class="scale-btn" data-value="3">3<span>5–10 hrs</span></button>
+            <button type="button" class="scale-btn" data-value="4">4<span>&gt;10 hrs</span></button>
+          </div>
+          <input type="hidden" name="studytime" id="studytime-hidden">
+        </div>
+
+        <div class="form-group" style="max-width:300px;">
+          <label class="field-label">Number of Past Class Failures <span class="attr-tag">failures</span></label>
+          <select name="failures">
+            <option value="">— Select —</option>
+            <option value="0">0 — No failures</option>
+            <option value="1">1 — One failure</option>
+            <option value="2">2 — Two failures</option>
+            <option value="3">3 — Three failures</option>
+            <option value="4">4 or more failures</option>
+          </select>
+        </div>
+
+        <p class="subsection-label">Academic Support &amp; Activities</p>
+        <div class="yn-grid">
+          <div class="yn-item">
+            <div class="yn-label">Extra educational support from school <span class="attr-tag">schoolsup</span></div>
+            <div class="yn-btns">
+              <label class="yn-opt"><input type="radio" name="schoolsup" value="yes"> Yes</label>
+              <label class="yn-opt"><input type="radio" name="schoolsup" value="no"> No</label>
+            </div>
+          </div>
+          <div class="yn-item">
+            <div class="yn-label">Family educational support at home <span class="attr-tag">famsup</span></div>
+            <div class="yn-btns">
+              <label class="yn-opt"><input type="radio" name="famsup" value="yes"> Yes</label>
+              <label class="yn-opt"><input type="radio" name="famsup" value="no"> No</label>
+            </div>
+          </div>
+          <div class="yn-item">
+            <div class="yn-label">Enrolled in paid extra classes <span class="attr-tag">paid</span></div>
+            <div class="yn-btns">
+              <label class="yn-opt"><input type="radio" name="paid" value="yes"> Yes</label>
+              <label class="yn-opt"><input type="radio" name="paid" value="no"> No</label>
+            </div>
+          </div>
+          <div class="yn-item">
+            <div class="yn-label">Participates in extracurricular activities <span class="attr-tag">activities</span></div>
+            <div class="yn-btns">
+              <label class="yn-opt"><input type="radio" name="activities" value="yes"> Yes</label>
+              <label class="yn-opt"><input type="radio" name="activities" value="no"> No</label>
+            </div>
+          </div>
+          <div class="yn-item">
+            <div class="yn-label">Attended nursery school <span class="attr-tag">nursery</span></div>
+            <div class="yn-btns">
+              <label class="yn-opt"><input type="radio" name="nursery" value="yes"> Yes</label>
+              <label class="yn-opt"><input type="radio" name="nursery" value="no"> No</label>
+            </div>
+          </div>
+          <div class="yn-item">
+            <div class="yn-label">Aspires to pursue higher education <span class="attr-tag">higher</span></div>
+            <div class="yn-btns">
+              <label class="yn-opt"><input type="radio" name="higher" value="yes"> Yes</label>
+              <label class="yn-opt"><input type="radio" name="higher" value="no"> No</label>
+            </div>
+          </div>
+          <div class="yn-item">
+            <div class="yn-label">Has internet access at home <span class="attr-tag">internet</span></div>
+            <div class="yn-btns">
+              <label class="yn-opt"><input type="radio" name="internet" value="yes"> Yes</label>
+              <label class="yn-opt"><input type="radio" name="internet" value="no"> No</label>
+            </div>
+          </div>
+          <div class="yn-item">
+            <div class="yn-label">Currently in a romantic relationship <span class="attr-tag">romantic</span></div>
+            <div class="yn-btns">
+              <label class="yn-opt"><input type="radio" name="romantic" value="yes"> Yes</label>
+              <label class="yn-opt"><input type="radio" name="romantic" value="no"> No</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Section 5: Lifestyle & Well-being ── -->
+      <div class="form-section">
+        <div class="section-header">
+          <span class="section-num">5</span>
+          <div>
+            <h3>Lifestyle &amp; Well-being</h3>
+            <p>Social habits, family environment, and health — rated on a 1–5 scale</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="field-label">Quality of Family Relationships <span class="attr-tag">famrel</span></label>
+          <div class="scale-buttons" data-field="famrel">
+            <button type="button" class="scale-btn" data-value="1">1<span>Very Bad</span></button>
+            <button type="button" class="scale-btn" data-value="2">2<span>Bad</span></button>
+            <button type="button" class="scale-btn" data-value="3">3<span>Neutral</span></button>
+            <button type="button" class="scale-btn" data-value="4">4<span>Good</span></button>
+            <button type="button" class="scale-btn" data-value="5">5<span>Excellent</span></button>
+          </div>
+          <input type="hidden" name="famrel" id="famrel-hidden">
+        </div>
+
+        <div class="form-group">
+          <label class="field-label">Free Time After School <span class="attr-tag">freetime</span></label>
+          <div class="scale-buttons" data-field="freetime">
+            <button type="button" class="scale-btn" data-value="1">1<span>Very Low</span></button>
+            <button type="button" class="scale-btn" data-value="2">2<span>Low</span></button>
+            <button type="button" class="scale-btn" data-value="3">3<span>Neutral</span></button>
+            <button type="button" class="scale-btn" data-value="4">4<span>High</span></button>
+            <button type="button" class="scale-btn" data-value="5">5<span>Very High</span></button>
+          </div>
+          <input type="hidden" name="freetime" id="freetime-hidden">
+        </div>
+
+        <div class="form-group">
+          <label class="field-label">Frequency of Going Out with Friends <span class="attr-tag">goout</span></label>
+          <div class="scale-buttons" data-field="goout">
+            <button type="button" class="scale-btn" data-value="1">1<span>Very Low</span></button>
+            <button type="button" class="scale-btn" data-value="2">2<span>Low</span></button>
+            <button type="button" class="scale-btn" data-value="3">3<span>Neutral</span></button>
+            <button type="button" class="scale-btn" data-value="4">4<span>High</span></button>
+            <button type="button" class="scale-btn" data-value="5">5<span>Very High</span></button>
+          </div>
+          <input type="hidden" name="goout" id="goout-hidden">
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="field-label">Workday Alcohol Consumption <span class="attr-tag">Dalc</span></label>
+            <div class="scale-buttons" data-field="Dalc">
+              <button type="button" class="scale-btn" data-value="1">1<span>Very Low</span></button>
+              <button type="button" class="scale-btn" data-value="2">2<span>Low</span></button>
+              <button type="button" class="scale-btn" data-value="3">3<span>Moderate</span></button>
+              <button type="button" class="scale-btn" data-value="4">4<span>High</span></button>
+              <button type="button" class="scale-btn" data-value="5">5<span>Very High</span></button>
+            </div>
+            <input type="hidden" name="Dalc" id="Dalc-hidden">
+          </div>
+
+          <div class="form-group">
+            <label class="field-label">Weekend Alcohol Consumption <span class="attr-tag">Walc</span></label>
+            <div class="scale-buttons" data-field="Walc">
+              <button type="button" class="scale-btn" data-value="1">1<span>Very Low</span></button>
+              <button type="button" class="scale-btn" data-value="2">2<span>Low</span></button>
+              <button type="button" class="scale-btn" data-value="3">3<span>Moderate</span></button>
+              <button type="button" class="scale-btn" data-value="4">4<span>High</span></button>
+              <button type="button" class="scale-btn" data-value="5">5<span>Very High</span></button>
+            </div>
+            <input type="hidden" name="Walc" id="Walc-hidden">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="field-label">Current Health Status <span class="attr-tag">health</span></label>
+          <div class="scale-buttons" data-field="health">
+            <button type="button" class="scale-btn" data-value="1">1<span>Very Bad</span></button>
+            <button type="button" class="scale-btn" data-value="2">2<span>Bad</span></button>
+            <button type="button" class="scale-btn" data-value="3">3<span>Neutral</span></button>
+            <button type="button" class="scale-btn" data-value="4">4<span>Good</span></button>
+            <button type="button" class="scale-btn" data-value="5">5<span>Very Good</span></button>
+          </div>
+          <input type="hidden" name="health" id="health-hidden">
+        </div>
+      </div>
+
+      <!-- ── Section 6: Academic Performance ── -->
+      <div class="form-section">
+        <div class="section-header">
+          <span class="section-num">6</span>
+          <div>
+            <h3>Academic Performance Record</h3>
+            <p>Absence count and grades on the 0–20 Portuguese grading scale</p>
+          </div>
+        </div>
+
+        <div class="form-group" style="max-width:260px;">
+          <label class="field-label">Number of School Absences <span class="attr-tag">absences</span></label>
+          <input type="number" name="absences" min="0" max="93" placeholder="0 – 93">
+        </div>
+
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="field-label">First Period Grade <span class="attr-tag">G1</span></label>
+            <input type="number" name="G1" min="0" max="20" placeholder="0 – 20">
+            <span class="field-hint">0 = 0% &nbsp;·&nbsp; 20 = 100%</span>
+          </div>
+          <div class="form-group">
+            <label class="field-label">Second Period Grade <span class="attr-tag">G2</span></label>
+            <input type="number" name="G2" min="0" max="20" placeholder="0 – 20">
+            <span class="field-hint">0 = 0% &nbsp;·&nbsp; 20 = 100%</span>
+          </div>
+          <div class="form-group">
+            <label class="field-label">Final Grade <span class="attr-tag">G3</span></label>
+            <input type="number" name="G3" min="0" max="20" placeholder="0 – 20">
+            <span class="field-hint">Primary target variable</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Submit ── -->
+      <div class="form-actions">
+        <button type="submit" class="btn-submit" id="submit-btn">
+          <span class="btn-text">Submit Response</span>
+          <span class="btn-loading" hidden>Submitting…</span>
+        </button>
+        <button type="button" class="btn-reset" id="reset-btn">Clear Form</button>
+      </div>
+
+      <div id="form-feedback" class="form-feedback" hidden></div>
+
+    </form>
+  </div>
+
+  <!-- ─────────────────── ABOUT TAB ─────────────────── -->
+  <div id="tab-about" class="tab-panel">
+
+    <div class="about-hero">
+      <h2>About This Survey Template</h2>
+      <p>A data collection instrument designed for replicating and extending student performance research in secondary schools — free for any academic or research use.</p>
+    </div>
+
+    <div class="about-grid">
+
+      <div class="about-card">
+        <div class="about-icon">🎯</div>
+        <h3>Purpose</h3>
+        <p>This survey template supports <strong>data pattern mining</strong> research on secondary school student performance. It is based on the landmark study by Cortez &amp; Silva (2008), which demonstrated that academic outcomes can be predicted and clustered from demographic, family, and behavioral data using machine learning techniques.</p>
+        <p>The 34 attributes collected here enable researchers to apply clustering, classification, anomaly detection, and dimensionality reduction to discover student performance profiles and the factors that shape them.</p>
+      </div>
+
+      <div class="about-card">
+        <div class="about-icon">📚</div>
+        <h3>What is Data Pattern Mining for Student Performance?</h3>
+        <p>Data pattern mining extracts hidden structures from large collections of student records. In the secondary school context, this means identifying natural student groups, learning rules that explain academic success or risk, and flagging students with unusually different profiles.</p>
+        <ul>
+          <li><strong>Clustering</strong> — Discovers student profiles (e.g., high achievers, at-risk students) without predefined labels.</li>
+          <li><strong>Classification</strong> — Learns rules such as "students with a second-period grade above 12 and zero past failures tend to be high performers."</li>
+          <li><strong>Anomaly Detection</strong> — Identifies students whose profile does not match any typical pattern, signaling cases that deserve individual attention.</li>
+          <li><strong>PCA</strong> — Reduces redundant features while preserving the most important variation in the data.</li>
+        </ul>
+        <p>These techniques help schools move from reactive intervention toward proactive, data-driven student support.</p>
+      </div>
+
+      <div class="about-card">
+        <div class="about-icon">📝</div>
+        <h3>Reference Dataset</h3>
+        <p>This template replicates the attribute schema from the UCI Student Performance Dataset:</p>
+        <blockquote>
+          Cortez, P. and Silva, A. (2008). <em>Using Data Mining to Predict Secondary School Student Performance.</em> University of Minho, Portugal.
+          <br><a href="https://archive-beta.ics.uci.edu/dataset/320/student+performance" target="_blank">UCI Repository →</a>
+        </blockquote>
+        <p>The original dataset covered students from two Portuguese secondary schools enrolled in Mathematics and Portuguese Language courses. This template preserves all 33 original attributes plus a 34th attribute (<code>course</code>) introduced when merging the two course datasets, as described in the accompanying data dictionary.</p>
+      </div>
+
+      <div class="about-card author-card">
+        <div class="about-icon">👤</div>
+        <h3>Author</h3>
+        <div class="author-details">
+          <p class="author-name">Cesar Arevalo Colocho</p>
+          <p>CS 4412 — Data Mining</p>
+          <p><a href="mailto:geovani.colocho03@gmail.com">geovani.colocho03@gmail.com</a></p>
+          <p><a href="https://github.com/Colochoo/cs4412-project" target="_blank">github.com/Colochoo/cs4412-project →</a></p>
+        </div>
+        <div class="license-box">
+          <span class="license-badge">🔓 Free to Use</span>
+          <p>This template is free for any academic research, educational analysis, or replication study. Attribution is appreciated but not required. No commercial restrictions apply.</p>
+        </div>
+      </div>
+
+      <div class="about-card full-width">
+        <div class="about-icon">📊</div>
+        <h3>How the Data Is Stored &amp; Used</h3>
+        <p>Responses submitted through this form are stored directly in a Google Spreadsheet as a structured table where each row is one student and each column maps to one of the 34 attributes. From there, researchers can:</p>
+        <ul>
+          <li>Export the sheet as <strong>.csv</strong> (File → Download → CSV) for use in R, Python, or any data analysis tool.</li>
+          <li>Apply the same preprocessing and analysis pipeline used in the original project (K-Means, PCA, DBSCAN, Decision Tree, LOF).</li>
+          <li>Adapt the attribute list or school/course labels for their own institutional context.</li>
+        </ul>
+        <p>No data is stored on any external server beyond your own Google account. This site is fully static and hosted on GitHub Pages.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─────────────────── SETUP TAB ─────────────────── -->
+  <div id="tab-setup" class="tab-panel">
+
+    <div class="panel-intro">
+      <h2>Setup Guide: Connecting to Google Sheets</h2>
+      <p>Follow these six steps to route form responses to your own Google Spreadsheet. No paid services or backend servers are needed — everything runs through Google Apps Script.</p>
+    </div>
+
+    <div class="steps-list">
+
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Create a Google Spreadsheet</h3>
+          <p>Go to <a href="https://sheets.google.com" target="_blank">sheets.google.com</a> and create a new blank spreadsheet. Name it anything (e.g., "Student Survey Responses"). Leave all cells empty — the script will add the column headers automatically on the first submission.</p>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Open the Apps Script Editor</h3>
+          <p>Inside your spreadsheet, click <strong>Extensions → Apps Script</strong>. Delete any placeholder code and paste the script below exactly as shown.</p>
+          <div class="code-block">
+            <div class="code-header">
+              <span>Apps Script — paste into the editor (script.gs)</span>
+              <button class="copy-btn" data-target="gas-code">Copy</button>
+            </div>
+            <pre id="gas-code">function doPost(e) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var data  = JSON.parse(e.postData.contents);
+
+    var headers = [
+      'timestamp', 'school', 'sex', 'age', 'address', 'famsize',
+      'Pstatus', 'Medu', 'Fedu', 'Mjob', 'Fjob', 'reason', 'guardian',
+      'traveltime', 'studytime', 'failures', 'schoolsup', 'famsup',
+      'paid', 'activities', 'nursery', 'higher', 'internet', 'romantic',
+      'famrel', 'freetime', 'goout', 'Dalc', 'Walc', 'health',
+      'absences', 'G1', 'G2', 'G3', 'course'
+    ];
+
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(headers);
+    }
+
+    var row = headers.map(function(h) {
+      return h === 'timestamp'
+        ? new Date().toISOString()
+        : (data[h] !== undefined ? data[h] : '');
+    });
+
+    sheet.appendRow(row);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'success' }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Deploy as a Web App</h3>
+          <ol>
+            <li>Click <strong>Deploy → New deployment</strong></li>
+            <li>Click the gear icon next to "Select type" and choose <strong>Web app</strong></li>
+            <li>Set <strong>Execute as: Me</strong></li>
+            <li>Set <strong>Who has access: Anyone</strong></li>
+            <li>Click <strong>Deploy</strong> and authorize the requested permissions</li>
+            <li>Copy the <strong>Web app URL</strong> that appears — it starts with <code>https://script.google.com/macros/s/…</code></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Paste the URL into script.js</h3>
+          <p>Open <code>script.js</code> in this repository. At the very top, find the configuration block and replace the placeholder value with your web app URL:</p>
+          <div class="code-block">
+            <pre>// ── CONFIGURATION ────────────────────────────────────────────────
+const APPS_SCRIPT_URL = 'YOUR_WEB_APP_URL_HERE';
+// ─────────────────────────────────────────────────────────────────</pre>
+          </div>
+          <p>Save the file, commit the change, and push to GitHub.</p>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h3>Enable GitHub Pages</h3>
+          <ol>
+            <li>Go to your repository on GitHub</li>
+            <li>Click <strong>Settings → Pages</strong></li>
+            <li>Under "Source", select <strong>Deploy from a branch</strong></li>
+            <li>Select your branch (e.g., <strong>main</strong>) and the <strong>/Website</strong> folder</li>
+            <li>Click <strong>Save</strong> — your site will be live at <code>https://yourusername.github.io/your-repo/</code> within a few minutes</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <h3>Export Collected Data as CSV</h3>
+          <p>Open your Google Spreadsheet at any time and click <strong>File → Download → Comma Separated Values (.csv)</strong>. The exported file will match the Student Performance Dataset schema exactly and is ready for analysis in R or Python without any additional transformation.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════ FOOTER ═══════════════════════════ -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <p>Student Performance Survey Template &nbsp;·&nbsp; <a href="https://github.com/Colochoo/cs4412-project" target="_blank">GitHub Repository</a></p>
+    <p>Created by <strong>Cesar Arevalo Colocho</strong> &nbsp;·&nbsp; Free for academic and research use &nbsp;·&nbsp; Based on <a href="https://archive-beta.ics.uci.edu/dataset/320/student+performance" target="_blank">Cortez &amp; Silva (2008)</a></p>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
