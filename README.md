@@ -26,22 +26,22 @@ The project emphasizes **pattern discovery and behavioral segmentation** rather 
 ```
 cs4412-project/
 ├── data/                              # Dataset files
-│   ├── finalData-Dictionary.md        # Full data dictionary (34 attributes)
+│   ├── finalData-Dictionary.md        # Full Final Data dictionary (34 attributes)
 │   └── reference-data/
 │       ├── student-mat.csv            # Math course student data
 │       ├── student-por.csv            # Portuguese course student data
-│       └── dataDictionary.txt         # Text description of all attributes
+│       └── dataDictionary.txt         # Text and original description of all attributes
 │
 ├── notebooks/                         # Analysis code (R Markdown)
 │   ├── M2_Analysis.Rmd                # M2: Initial implementation (K-Means baseline)
 │   ├── M3_Analysis.Rmd                # M3: Complete implementation (all techniques)
-│   └── M4_Analysis.Rmd                # M4: Final report (consolidated analysis)
+│   └── M4_Analysis.Rmd                # M4: Overall Analysis (consolidated analysis)
 │
 ├── docs/                              # Summary documents
 │   ├── Proposal.pdf                   # M1: Proposal document
 │   ├── Summary_AnalysisDoc_M2.pdf     # M2: Summary of initial analysis
 │   ├── Summary_AnalysisDoc_M3.pdf     # M3: Summary of complete analysis
-│   └── M4_FinalReport.pdf             # M4: Final rendered report
+│   └── FinalReport.pdf                # M4: Final Report
 │
 ├── outputs/                           # Knitted notebook outputs
 │   ├── M2_Analysis.pdf                # M2: Rendered notebook
@@ -119,7 +119,7 @@ Applied data preprocessing, exploratory data analysis, and K-Means clustering to
 - Failures, study time, and absences also influence performance
 - K-Means (k=3, silhouette ≈ 0.19) identified three student profiles: high-performing, moderate, and at-risk
 
-📄 [M2 Summary Document](docs/Summary_AnalysisDoc_M2.pdf) · 📓 [M2 Notebook](notebooks/M2_Analysis.Rmd) · 📊 [M2 Output](outputs/M2_Analysis.pdf)
+📄 [M2 Summary Document](docs/Summary_AnalysisDoc_M2.pdf) · 📓 [M2 Notebook](notebooks/M2_Analysis.Rmd) · 📊 [M2 Notebook Output](outputs/M2_Analysis.pdf)
 
 ### M3 — Complete Implementation
 
@@ -141,7 +141,7 @@ Extended M2 with additional techniques to validate cluster structure, improve in
 - Study time and absences have minimal impact on cluster separation
 - LOF anomalies represent students with mismatched profiles worthy of individual investigation
 
-📄 [M3 Summary Document](docs/Summary_AnalysisDoc_M3.pdf) · 📓 [M3 Notebook](notebooks/M3_Analysis.Rmd) · 📊 [M3 Output](outputs/M3_Analysis.pdf)
+📄 [M3 Summary Document](docs/Summary_AnalysisDoc_M3.pdf) · 📓 [M3 Notebook](notebooks/M3_Analysis.Rmd) · 📊 [M3 Notebook Output](outputs/M3_Analysis.pdf)
 
 ### M4 — Final Report
 
@@ -163,7 +163,7 @@ Consolidated the full analysis pipeline into a cohesive final report that direct
 - Students flagged by LOF often have mismatched socioeconomic and academic profiles
 - Study time and absences do not reliably separate clusters on their own
 
-📓 [M4 Notebook](notebooks/M4_Analysis.Rmd) · 📓 [M4 Final Report](notebooks/M4_FinalReport.Rmd)
+📄 [Final Report](docs/FinalReport.Rmd) · 📓 [M4 Notebook](notebooks/M4_Analysis.Rmd) · 📊 [M4 Notebook Output](outputs/M4_Analysis.pdf)
 
 ---
 
