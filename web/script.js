@@ -21,9 +21,9 @@ const SCALE_FIELDS  = ['traveltime', 'studytime', 'famrel', 'freetime',
 const NUMBER_FIELDS = [
   { name: 'age',      min: 15, max: 22, label: 'Age' },
   { name: 'absences', min: 0,  max: 93, label: 'Number of absences' },
-  { name: 'G1',       min: 0,  max: 20, label: 'First period grade (G1)' },
-  { name: 'G2',       min: 0,  max: 20, label: 'Second period grade (G2)' },
-  { name: 'G3',       min: 0,  max: 20, label: 'Final grade (G3)' }
+  { name: 'G1',       min: 0,  max: 100, label: 'First period grade (G1)' },
+  { name: 'G2',       min: 0,  max: 100, label: 'Second period grade (G2)' },
+  { name: 'G3',       min: 0,  max: 100, label: 'Final grade (G3)' }
 ];
 
 // Friendly display names for validation messages
@@ -214,6 +214,13 @@ function collectFormData(form) {
   NUMBER_FIELDS.forEach(({ name }) => {
     const el = form.querySelector(`[name="${name}"]`);
     data[name] = el ? el.value : '';
+  });
+
+  // Convert grade percentages (0–100) to 0–20 scale before storage
+  ['G1', 'G2', 'G3'].forEach(name => {
+    if (data[name] !== '') {
+      data[name] = Math.round(Number(data[name]) * 20 / 100);
+    }
   });
 
   return data;

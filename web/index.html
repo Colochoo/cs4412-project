@@ -58,35 +58,39 @@
           </div>
         </div>
 
-        <div class="form-grid-2">
-          <div class="form-group">
-            <label class="field-label">School <span class="attr-tag">school</span></label>
-            <div class="radio-card-group">
-              <label class="radio-card">
-                <input type="radio" name="school" value="GP">
-                <span class="rc-box"><strong>GP</strong><small>Gabriel Pereira</small></span>
-              </label>
-              <label class="radio-card">
-                <input type="radio" name="school" value="MS">
-                <span class="rc-box"><strong>MS</strong><small>Mousinho da Silveira</small></span>
-              </label>
-            </div>
-            <span class="field-hint">Rename these for your own institution</span>
+        <div class="form-group">
+          <label class="field-label">School <span class="attr-tag">school</span></label>
+          <div class="radio-card-group">
+
+            <!-- ── SCHOOL NAME ── To rename, follow Setup Survey Guide → Step 1 ── -->
+            <label class="radio-card">
+              <input type="radio" name="school" value="GP" checked>
+              <span class="rc-box"><strong>GP</strong><small>Gabriel Pereira</small></span>
+            </label>
+          </div>
+          <span class="field-hint">To rename this school, see <strong>Setup Survey Guide → Step 1</strong></span>
+        </div>
+
+        <div class="form-group">
+          <label class="field-label">Course <span class="attr-tag">course</span></label>
+          <div class="radio-card-group">
+         
+          <!-- ── COURSES ── To add or rename courses, follow Setup Survey Guide → Steps 2 ── -->
+            <!-- Course 1 Example -->
+            <label class="radio-card">
+              <input type="radio" name="course" value="Math">
+              <span class="rc-box"><strong>Math</strong><small>Mathematics</small></span>
+            </label>
+
+            <!-- Course 2 Example -->
+            <label class="radio-card">
+              <input type="radio" name="course" value="Por">
+              <span class="rc-box"><strong>Por</strong><small>Portuguese Language</small></span>
+            </label>
           </div>
 
-          <div class="form-group">
-            <label class="field-label">Course <span class="attr-tag">course</span></label>
-            <div class="radio-card-group">
-              <label class="radio-card">
-                <input type="radio" name="course" value="Math">
-                <span class="rc-box"><strong>Math</strong><small>Mathematics</small></span>
-              </label>
-              <label class="radio-card">
-                <input type="radio" name="course" value="Por">
-                <span class="rc-box"><strong>Por</strong><small>Portuguese Language</small></span>
-              </label>
-            </div>
-          </div>
+
+          <span class="field-hint">To rename or add courses, see <strong>Setup Guide → Steps 7 &amp; 8</strong></span>
         </div>
 
         <div class="form-group" style="max-width:400px;">
@@ -440,7 +444,7 @@
           <span class="section-num">6</span>
           <div>
             <h3>Academic Performance Record</h3>
-            <p>Absence count and grades on the 0–20 Portuguese grading scale</p>
+            <p>Enter grades as US percentages (0–100). Values are automatically converted and stored on the 0–20 scale.</p>
           </div>
         </div>
 
@@ -452,18 +456,18 @@
         <div class="form-grid-3">
           <div class="form-group">
             <label class="field-label">First Period Grade <span class="attr-tag">G1</span></label>
-            <input type="number" name="G1" min="0" max="20" placeholder="0 – 20">
-            <span class="field-hint">0 = 0% &nbsp;·&nbsp; 20 = 100%</span>
+            <input type="number" name="G1" min="0" max="100" placeholder="0 – 100">
+            <span class="field-hint">Enter % </span>
           </div>
           <div class="form-group">
             <label class="field-label">Second Period Grade <span class="attr-tag">G2</span></label>
-            <input type="number" name="G2" min="0" max="20" placeholder="0 – 20">
-            <span class="field-hint">0 = 0% &nbsp;·&nbsp; 20 = 100%</span>
+            <input type="number" name="G2" min="0" max="100" placeholder="0 – 100">
+            <span class="field-hint">Enter % </span>
           </div>
           <div class="form-group">
             <label class="field-label">Final Grade <span class="attr-tag">G3</span></label>
-            <input type="number" name="G3" min="0" max="20" placeholder="0 – 20">
-            <span class="field-hint">Primary target variable</span>
+            <input type="number" name="G3" min="0" max="100" placeholder="0 – 100">
+            <span class="field-hint">Enter % &nbsp;·&nbsp; primary target variable</span>
           </div>
         </div>
       </div>
@@ -490,28 +494,31 @@
       <p>A data collection instrument designed for replicating and extending student performance research in secondary schools — free for any academic or research use.</p>
     </div>
 
+    <div class="about-card">
+      <div class="about-icon">🎯</div>
+      <h3>Purpose</h3>
+      <p>This survey template supports <strong>data pattern mining</strong> research on secondary school student performance. It is based on the landmark study by Cortez &amp; Silva (2008), which demonstrated that academic outcomes can be predicted and clustered from demographic, family, and behavioral data using machine learning techniques.</p>
+      <p>The 34 attributes collected here enable researchers to apply clustering, classification, anomaly detection, and dimensionality reduction to discover student performance profiles and the factors that shape them.</p>
+    </div>
+
+    <br>
+
+    <div class="about-card">
+      <div class="about-icon">📚</div>
+      <h3>What is Data Pattern Mining for Student Performance?</h3>
+      <p>Data pattern mining extracts hidden structures from large collections of student records. In the secondary school context, this means identifying natural student groups, learning rules that explain academic success or risk, and flagging students with unusually different profiles.</p>
+      <ul>
+        <li><strong>Clustering</strong> — Discovers student profiles (e.g., high achievers, at-risk students) without predefined labels.</li>
+        <li><strong>Classification</strong> — Learns rules such as "students with a second-period grade above 12 and zero past failures tend to be high performers."</li>
+        <li><strong>Anomaly Detection</strong> — Identifies students whose profile does not match any typical pattern, signaling cases that deserve individual attention.</li>
+        <li><strong>PCA</strong> — Reduces redundant features while preserving the most important variation in the data.</li>
+      </ul>
+      <p>These techniques help schools move from reactive intervention toward proactive, data-driven student support.</p>
+    </div>
+
+    <br>
+
     <div class="about-grid">
-
-      <div class="about-card">
-        <div class="about-icon">🎯</div>
-        <h3>Purpose</h3>
-        <p>This survey template supports <strong>data pattern mining</strong> research on secondary school student performance. It is based on the landmark study by Cortez &amp; Silva (2008), which demonstrated that academic outcomes can be predicted and clustered from demographic, family, and behavioral data using machine learning techniques.</p>
-        <p>The 34 attributes collected here enable researchers to apply clustering, classification, anomaly detection, and dimensionality reduction to discover student performance profiles and the factors that shape them.</p>
-      </div>
-
-      <div class="about-card">
-        <div class="about-icon">📚</div>
-        <h3>What is Data Pattern Mining for Student Performance?</h3>
-        <p>Data pattern mining extracts hidden structures from large collections of student records. In the secondary school context, this means identifying natural student groups, learning rules that explain academic success or risk, and flagging students with unusually different profiles.</p>
-        <ul>
-          <li><strong>Clustering</strong> — Discovers student profiles (e.g., high achievers, at-risk students) without predefined labels.</li>
-          <li><strong>Classification</strong> — Learns rules such as "students with a second-period grade above 12 and zero past failures tend to be high performers."</li>
-          <li><strong>Anomaly Detection</strong> — Identifies students whose profile does not match any typical pattern, signaling cases that deserve individual attention.</li>
-          <li><strong>PCA</strong> — Reduces redundant features while preserving the most important variation in the data.</li>
-        </ul>
-        <p>These techniques help schools move from reactive intervention toward proactive, data-driven student support.</p>
-      </div>
-
       <div class="about-card">
         <div class="about-icon">📝</div>
         <h3>Reference Dataset</h3>
@@ -529,7 +536,6 @@
         <div class="author-details">
           <p class="author-name">Cesar Arevalo Colocho</p>
           <p>CS 4412 — Data Mining</p>
-          <p><a href="mailto:geovani.colocho03@gmail.com">geovani.colocho03@gmail.com</a></p>
           <p><a href="https://github.com/Colochoo/cs4412-project" target="_blank">github.com/Colochoo/cs4412-project →</a></p>
         </div>
         <div class="license-box">
@@ -557,11 +563,96 @@
   <div id="tab-setup" class="tab-panel">
 
     <div class="panel-intro">
-      <h2>Setup Guide: Connecting to Google Sheets</h2>
-      <p>Follow these six steps to route form responses to your own Google Spreadsheet. No paid services or backend servers are needed — everything runs through Google Apps Script.</p>
+      <h2>Setup Survey Guide: Renaming School and Course Options</h2>
+      <p>Follow these three steps to customize the survey for your institution and make it fit your needs.</p>
     </div>
 
     <div class="steps-list">
+
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Rename the School and Course Labels</h3>
+          <p>Open <code>index.html</code> in a text editor. Search for the comment <code>&lt;!-- ── SCHOOL NAME ──</code> to jump directly to the school card, and <code>&lt;!-- ── COURSES ──</code> for the course cards. Each card has three values you can change:</p>
+          <div class="code-block">
+            <div class="code-header">
+              <span>index.html — school card (search for the comment above)</span>
+            </div>
+            <pre>&lt;input type="radio" name="school" value="GP" checked&gt;
+&lt;!--                               ^^^
+     value  → the code stored in your CSV column (keep it short, no spaces)  --&gt;
+
+&lt;span class="rc-box"&gt;
+  &lt;strong&gt;GP&lt;/strong&gt;          &lt;!-- short code shown on the button --&gt;
+  &lt;small&gt;Gabriel Pereira&lt;/small&gt; &lt;!-- full name shown below the code --&gt;
+&lt;/span&gt;</pre>
+          </div>
+          <p>Change all three to match your institution. For example, to use "Lincoln High School" with code <code>LHS</code>:</p>
+          <div class="code-block">
+            <div class="code-header">
+              <span>Renamed example</span>
+            </div>
+            <pre>&lt;input type="radio" name="school" value="LHS" checked&gt;
+&lt;span class="rc-box"&gt;
+  &lt;strong&gt;LHS&lt;/strong&gt;
+  &lt;small&gt;Lincoln High School&lt;/small&gt;
+&lt;/span&gt;</pre>
+          </div>
+          <p>The same three-part pattern applies to each course card. Find the <code>&lt;!-- ── COURSES ──</code> comment and rename every <code>value</code>, <code>&lt;strong&gt;</code>, and <code>&lt;small&gt;</code> you need.</p>
+          <p><strong>Important:</strong> after renaming, also update the <code>headers</code> array in your Apps Script (Step 2) if you added a new column, and re-deploy the web app (Step 3) to apply the changes.</p>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Add More Course Options</h3>
+          <p>Open <code>index.html</code> and search for the comment <code>&lt;!-- ── COURSES ──</code>. You will see a <code>&lt;div class="radio-card-group"&gt;</code> containing one <code>&lt;label class="radio-card"&gt;</code> block per course. To add a new course, copy the template below and paste it <strong>inside</strong> that same <code>radio-card-group</code> div, after the last existing course card:</p>
+          <div class="code-block">
+            <div class="code-header">
+              <span>Course card template — copy and paste for each new course</span>
+              <button class="copy-btn" data-target="course-template-code">Copy</button>
+            </div>
+            <pre id="course-template-code">&lt;label class="radio-card"&gt;
+  &lt;input type="radio" name="course" value="Bio"&gt;
+  &lt;span class="rc-box"&gt;
+    &lt;strong&gt;Bio&lt;/strong&gt;
+    &lt;small&gt;Biology&lt;/small&gt;
+  &lt;/span&gt;
+&lt;/label&gt;</pre>
+          </div>
+          <p>Replace <code>Bio</code> (the <code>value</code> and <code>&lt;strong&gt;</code>) with your course code, and replace <code>Biology</code> (the <code>&lt;small&gt;</code>) with the full course name. Repeat for as many courses as you need — the card group will wrap automatically.</p>
+          <p>After adding courses, save the file, commit the change, and push to GitHub so the live site updates.</p>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Remove the About &amp; Setup Guide Tabs Before Going Public</h3>
+          <p>The <strong>About &amp; Purpose</strong> and <strong>Setup Guide</strong> tabs are for your reference only. Before deploying the site to respondents, delete the two <code>&lt;button&gt;</code> elements below from the <code>&lt;nav class="tab-nav"&gt;</code> block in <code>index.html</code>:</p>
+          <div class="code-block">
+            <div class="code-header">
+              <span>index.html — lines to delete from &lt;nav class="tab-nav"&gt;</span>
+            </div>
+            <pre>&lt;button class="tab-btn" data-tab="about"&gt;
+  &lt;span&gt;ℹ️&lt;/span&gt; About &amp;amp; Purpose
+&lt;/button&gt;
+&lt;button class="tab-btn" data-tab="setup"&gt;
+  &lt;span&gt;⚙️&lt;/span&gt; Setup Guide
+&lt;/button&gt;</pre>
+          </div>
+          <p>After removing those buttons the nav will show only the <strong>Survey</strong> tab, which is the only thing respondents need to see.</p>
+          <p><strong>Optional cleanup:</strong> you can also delete the two corresponding tab panel <code>&lt;div&gt;</code> blocks — <code>&lt;div id="tab-about" …&gt;</code> and <code>&lt;div id="tab-setup" …&gt;</code> — to reduce page size. The survey will work correctly either way.</p>
+        </div>
+      </div>
+
+      <br>
+      <hr>
+      <div class="panel-intro">
+        <h2>Setup Guide: Connecting to Google Sheets</h2>
+        <p>Follow these eight steps to customize the survey for your institution and route form responses to your own Google Spreadsheet. No paid services or backend servers are needed — everything runs through Google Apps Script.</p>
+      </div>
 
       <div class="step-card">
         <div class="step-num">1</div>
@@ -653,14 +744,16 @@ const APPS_SCRIPT_URL = 'YOUR_WEB_APP_URL_HERE';
       <div class="step-card">
         <div class="step-num">5</div>
         <div class="step-body">
-          <h3>Enable GitHub Pages</h3>
+          <h3>Enable GitHub Pages as your Website</h3>
           <ol>
             <li>Go to your repository on GitHub</li>
             <li>Click <strong>Settings → Pages</strong></li>
-            <li>Under "Source", select <strong>Deploy from a branch</strong></li>
-            <li>Select your branch (e.g., <strong>main</strong>) and the <strong>/Website</strong> folder</li>
+            <li>Under "Source", select <strong>GitHub Actions</strong></li>
             <li>Click <strong>Save</strong> — your site will be live at <code>https://yourusername.github.io/your-repo/</code> within a few minutes</li>
           </ol>
+          <p>
+            <strong>Note: </strong> in case you don't have a GitHub repository or prefer not to use GitHub Pages, you can also host this site on any static hosting service (e.g., Netlify, Vercel) by uploading the files (html, css, js) and configuring the form submission URL as described in step 4.
+          </p>
         </div>
       </div>
 
