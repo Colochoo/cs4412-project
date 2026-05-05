@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(& \"C:\\\\Program Files\\\\R\\\\R-4.5.2\\\\bin\\\\Rscript.exe\" -e \"tinytex::tlmgr_update\\(\\)\" 2>&1)",
+      "PowerShell(& \"C:\\\\Program Files\\\\R\\\\R-4.5.2\\\\bin\\\\Rscript.exe\" -e \"rmarkdown::pandoc_exec\\(\\)\" 2>&1)",
+      "PowerShell(Get-ChildItem \"C:\\\\Program Files\\\\RStudio\" -Recurse -ErrorAction SilentlyContinue -Depth 8 | Where-Object { $_.Name -eq \"pandoc.exe\" } | Select-Object FullName)",
+      "PowerShell($machinePath = [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"Machine\"\\); $userPath = [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"User\"\\); Write-Output \"Machine PATH entries:\"; $machinePath -split \";\" | Select-Object -Last 5; Write-Output \"User PATH entries:\"; $userPath -split \";\" | Select-Object -Last 5)"
+    ]
+  }
+}

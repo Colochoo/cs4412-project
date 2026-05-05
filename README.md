@@ -202,7 +202,90 @@ Consolidated the full analysis pipeline into a cohesive final report that direct
 - Students flagged by LOF often have mismatched socioeconomic and academic profiles
 - Study time and absences do not reliably separate clusters on their own
 
-📓 [M4 Notebook](notebooks/M4_Analysis.Rmd) · 📓 [M4 Final Report](notebooks/M4_FinalReport.Rmd)
+<<<<<<< HEAD
+📄 [Final Report](notebooks/FinalReport.pdf) · 📓 [M4 Notebook](notebooks/M4_Analysis.Rmd) · 📊 [M4 Notebook Output](outputs/M4_Analysis.pdf)
+
+
+---
+
+## FInal Analysis Pipeline
+
+The project follows a sequential data mining pipeline applied across milestones M2–M4. Each stage feeds directly into the next.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  1. DATA COLLECTION                                         │
+│     • Dataset in .csv format                                │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────┐
+│  2. PREPROCESSING                                           │
+│     • Merge all dataset into one                            │
+│     • Binary text → 0/1                                     │
+│     • Binary Nominal → 0/1                                  │
+│     • Nominal categories → integer codes                    │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────┐
+│  3. FEATURE SELECTION                                       │
+│     • Correlation heatmap                                   │
+│     • Bar chart of correlation with G3                      │
+│     • Select key attributes                                 │
+│     • Exclude Noise attributes                              │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────┐
+│  4. CLUSTERING PREPARATION                                  │
+│     • Standardize all features (mean=0, sd=1)               │
+│     • Elbow method + Silhouette method                      │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────┐
+│  5. K-MEANS CLUSTERING  (Baseline — M2)                     │
+│     • Avg silhouette                                        │
+|           -Close to 1 means cluster are well separated      |
+|           -Close to 0 means overlaping data                 |
+|           -Close to -1 means poor clustering                |
+│     • check for 3 profiles:                                 |
+|            Steady Achievers · Middle Ground · At-Risk       │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                 (M3 Analysis Progress)
+          ┌─────────────────┼─────────────────┐
+          │                 │                 │
+┌─────────▼──────┐ ┌────────▼───────┐ ┌──────▼──────────────┐
+│  6. PCA        │ │  7. DBSCAN     │ │  8. HIERARCHICAL    │
+│  Dim. Reduction│ │  Density-based │ │  CLUSTERING         │
+│                │ │  Validation    │ │  Agglomerative      │
+│  • Re-run      │ │                │ │  Validation         │
+│    K-Means     │ │ • Confirms     │ │                     │
+│   on PCA space │ │   gradual      │ │   • Dendogram,      │
+│   → improved   │ │   boundaries   │ │    → orginize data  │
+│   silhouette   │ │                │ │  into nested groups │
+└─────────┬──────┘ └────────┬───────┘ └──────┬──────────────┘
+          │                 │                 │
+          └─────────────────┼─────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────┐
+│  9. DECISION TREE  (Interpretability)                       │
+│     • Cluster labels used as target variable                │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────┐
+│  10. LOF ANOMALY DETECTION                                  │
+│      • Find an Local Outlier Factor                         │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────┐
+│  11. FINDINGS & INTERPRETATION  (M4 Final Report)           │
+│      • Answer the 3 original discovery questions            │
+│      • Cross-method validation and silhouette comparison    │
+│      • Critical assessment, limitations, ethical review     │
+└─────────────────────────────────────────────────────────────┘
+```
+=======
+📄 [Final Report](docs/FinalReport.Rmd) · 📓 [M4 Notebook](notebooks/M4_Analysis.Rmd) · 📊 [M4 Notebook Output](outputs/M4_Analysis.pdf)
+>>>>>>> c07845397bc8b1a20746b0d7c76a9062778443b2
 
 ---
 
