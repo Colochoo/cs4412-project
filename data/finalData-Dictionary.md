@@ -92,7 +92,7 @@ For example, `Mjob` might be encoded as: `at_home = 1, health = 2, other = 3, se
 **Consequence:** These attributes were **excluded** from distance-based clustering (K-Means, DBSCAN, Hierarchical) to avoid introducing misleading patterns. They were only used in exploratory analysis and visualizations where their categorical nature was preserved.
 
 >**However,** for future analysis or for anyone who wishes to use this template, these attributes can be converted to an ordinal numeric type if needed. This would require manual changes to the dataset, but it can be avoided by defining an ordinal numeric range from the beginning when conducting a survey.
-> - See our survey template [here]()
+> - See our survey template [here](https://colochoo.github.io/cs4412-project/)
 
 ---
 ## Attribute Changes Made for Future Work Analysis 
