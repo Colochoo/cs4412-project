@@ -63,17 +63,17 @@ knitr::opts_chunk$set(
 # Load both datasets from GitHub repository 
 
 student_math <- read.csv(
-"https://raw.githubusercontent.com/Colochoo/cs4412-project/main/data/student-mat.csv",
-header = TRUE,
-sep = ",",
-stringsAsFactors = FALSE
+  "https://raw.githubusercontent.com/Colochoo/cs4412-project/main/data/reference-data/student-mat.csv",
+  header = TRUE, 
+  sep = ",", 
+  stringsAsFactors = FALSE
 )
 
 student_por <- read.csv(
-"https://raw.githubusercontent.com/Colochoo/cs4412-project/main/data/student-por.csv",
-header = TRUE,
-sep = ",",
-stringsAsFactors = FALSE
+  "https://raw.githubusercontent.com/Colochoo/cs4412-project/main/data/reference-data/student-por.csv",
+  header = TRUE, 
+  sep = ",", 
+  stringsAsFactors = FALSE
 )
 
 # Add course identifier
